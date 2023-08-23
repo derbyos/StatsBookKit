@@ -61,10 +61,24 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
         XCTAssertEqual(try formula5.eval(), 3.0)
         let formula3 = sheet[row: 42, col: "V"]!.formula!
         XCTAssertEqual(try formula3.eval(), 3.0)
-        
-        for row in 1...84 {
+    }
+    
+    func testFormula2() throws {
+        let file = try loadSampleFile()
+        let sheet = try file.sheet(named: "IGRF")
+        // home score period 1
+        let formula2 = sheet[row: 36, col: "C"]!.formula!
+        XCTAssertEqual(try formula2.eval(), 43.0)
+        let formula3 = sheet[row: 36, col: "F"]!.formula!
+        XCTAssertEqual(try formula3.eval(), 10.0)
+    }
+    
+    func printSheet(_ sheetName: String, bottomRight: Address) throws {
+        let file = try loadSampleFile()
+        let sheet = try file.sheet(named: sheetName)
+        for row in 1...bottomRight.row {
             var cols = [String]()
-            for col in 0 ... 37 {
+            for col in 0 ... bottomRight.columnNumber {
                 guard let f = sheet[row: row, col: Address.columnName(col)], let value = try f.eval(force: true) else {
                     cols.append("")
                     continue
@@ -82,5 +96,18 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
             }
             print(row, cols.joined(separator: "|"))
         }
+    }
+    
+    func testIGRFSheet() throws {
+        try printSheet("IGRF", bottomRight: Address(row: 90, column: "M"))
+    }
+    func testScoresSheet() throws {
+        try printSheet("Score", bottomRight: Address(row: 84, column: "AK"))
+    }
+    func testPenaltiesSheet() throws {
+        try printSheet("Penalties", bottomRight: Address(row: 45, column: "BD"))
+    }
+    func testLineupsSheet() throws {
+        try printSheet("Lineups", bottomRight: Address(row: 84, column: "AZ"))
     }
 }

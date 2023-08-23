@@ -107,6 +107,14 @@ extension Formula {
                 }
             }
             return .number(total)
+        case "COUNTA": // count number of non-empty cells
+            var total = 0.0
+            for value in try flatten(param: param) {
+                if !value.isEmpty {
+                    total += 1.0
+                }
+            }
+            return .number(total)
         case "MAX":
             var total = -Double.infinity
             for value in try flatten(param: param) {

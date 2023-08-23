@@ -21,14 +21,16 @@ public struct SheetReference {
 /// is shared by any dynamic creation (such as cells)
 public class Sheet {
     weak var file: StatsBookFile!
+    var name: String
     var xml: XML
     var rels: XML
     /// Create the sheet
     /// - Parameters:
     ///   - file: The xls file
     ///   - xml: The xml of the sheet
-    init(file: StatsBookFile, _ xml: XML, rels: XML) {
+    init(file: StatsBookFile, name: String, _ xml: XML, rels: XML) {
         self.file = file
+        self.name = name
         self.xml = xml
         self.rels = rels
     }

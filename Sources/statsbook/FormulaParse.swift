@@ -51,7 +51,7 @@ extension Formula {
             if scanner.scanString("!") == nil {
                 throw Errors.malformedCellAddress
             }
-        } else if let name = scanner.scanCharacters(from: .uppercaseLetters) {
+        } else if let name = scanner.scanCharacters(from: .letters) {
             // this could be a cell column
             if scanner.scanString("!") != nil {
                 sheetName = name

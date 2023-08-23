@@ -119,7 +119,7 @@ public class StatsBookFile {
         let xml = try XML(data)
         let relsData = try zipFile.data(for: "xl/worksheets/_rels/" + relPath.split(separator: "/").last! + ".rels")
         let relXML = try XML(relsData)
-        let retval = Sheet(file: self, xml, rels: relXML)
+        let retval = Sheet(file: self, name: named, xml, rels: relXML)
         cachedSheets[named] = retval
         return retval
     }

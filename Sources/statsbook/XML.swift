@@ -219,7 +219,7 @@ extension XML : CustomStringConvertible {
             if children.isEmpty {
                 retval += "/>"
             } else {
-                retval += children.map{$0.description}.joined() + "</\(name)>"
+                retval += ">" + children.map{$0.description}.joined() + "</\(name)>"
             }
             return retval
         case .cdata, .comment:
