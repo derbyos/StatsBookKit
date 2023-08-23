@@ -9,7 +9,7 @@ import Foundation
 
 
 /// Support for simple formulas
-struct Formula {
+public struct Formula {
     /// Errors found while parsing or executing the formula
     enum Errors : Error {
         case expectedCommaBetweenParameters
@@ -17,9 +17,14 @@ struct Formula {
         case unableToParseFormula
         case malformedCellAddress
         case invalidString
+        case unimplementedFunction(String)
+        case malformedFunction(String)
+        case typeMismatch(String)
     }
     var root: Op
-    init(source: String) throws {
+    var sheet: Sheet
+    public init(source: String, sheet: Sheet) throws {
+        self.sheet = sheet
         let scanner = Scanner(string: source)
         root = .undefined
         // now we can call ourselves
@@ -224,5 +229,143 @@ struct Formula {
         case function(String, [Op])
         case binary(Op, Operator, Op)
         case prefix(Prefix, Op)
+    }
+    public enum Value: Equatable {
+        case string(String)
+        case int(Int)
+        case bool(Bool)
+        case undefined
+        
+        var isTrue: Bool {
+            switch self {
+            case .bool(let b): return b
+            case .int(let i): return i != 0
+            case .string(let s): return !s.isEmpty
+            case .undefined: return false
+            }
+        }
+    }
+    public func eval() throws -> Value {
+        try eval(op: root)
+    }
+    
+    func eval(fn: String, param: [Op]) throws -> Value {
+        switch fn {
+        case "IF":
+            if param.count == 2 {
+                if try eval(op:param[0]).isTrue {
+                    return try eval(op:param[1])
+                } else {
+                    return .undefined
+                }
+            } else if param.count == 3 {
+                if try eval(op:param[0]).isTrue {
+                    return try eval(op:param[1])
+                } else {
+                    return try eval(op:param[2])
+                }
+            } else {
+                throw Errors.malformedFunction("IF() expects 2 or 3 parameters")
+            }
+        case "OR":
+            return .bool(try param.contains(where: { op in
+                try eval(op: op).isTrue
+            }))
+        case "AND":
+            return .bool(try param.allSatisfy({ op in
+                try eval(op: op).isTrue
+            }))
+        case "ISBLANK":
+            guard param.count == 1 else {
+                throw Errors.malformedFunction("ISBLANK() expects 1 parameter")
+            }
+            let v = try eval(op:param[0])
+            switch v {
+            case .string(let s): return .bool(s.isEmpty)
+            case .undefined: return true
+            default: return false
+            }
+        default:
+            throw Errors.unimplementedFunction(fn)
+        }
+    }
+    
+    func eval(lhs: Op, binOp: Operator, rhs: Op) throws -> Value {
+        let l = try eval(op: lhs)
+        switch binOp {
+        case .eq:
+            return try .bool(l == eval(op: rhs))
+        case .ne:
+            return try .bool(l != eval(op: rhs))
+        case .concat:
+            guard case let .string(lstring) = l, case let .string(rstring) = try eval(op: rhs) else {
+                throw Errors.typeMismatch("Concat operator requires two strings")
+            }
+            return .string(lstring + rstring)
+        default:
+            throw Errors.unimplementedFunction(binOp.rawValue)
+        }
+    }
+    func eval(op: Op) throws -> Value {
+        switch op {
+        case .constantInt(let i): return .int(i)
+        case .constantString(let s): return .string(s)
+        case .referenceCell(let addr):
+            guard let cell = sheet[addr] else {
+                return .undefined
+            }
+            guard let value = cell.value else {
+                return .undefined
+            }
+            return value
+        case .function(let fn, let ops):
+            return try eval(fn: fn, param: ops)
+        case .referenceNonLocalCell(let sheetName, let addr):
+            let newSheet = try sheet.file.sheet(named: sheetName)
+            guard let cell = newSheet[addr] else {
+                return .undefined
+            }
+            guard let value = cell.value else {
+                return .undefined
+            }
+            return value
+        case .binary(let lhs, let binop, let rhs):
+            return try eval(lhs: lhs, binOp: binop, rhs: rhs)
+        default:
+            throw Errors.unimplementedFunction("")
+        }
+    }
+}
+
+
+extension Cell {
+    var value: Formula.Value? {
+        switch xml["t"] {
+        case "s":
+            guard let sharedID = xml.firstChild(named: "v")?.asInt else {
+                return nil
+            }
+            return sheet.file[sharedString: sharedID].map{.string($0)}
+        case "str":
+            return xml.firstChild(named: "v").map{.string($0.asString)}
+        default:
+            return nil
+        }
+    }
+}
+
+
+extension Formula.Value : ExpressibleByNilLiteral, ExpressibleByStringLiteral, ExpressibleByIntegerLiteral, ExpressibleByBooleanLiteral {
+    public init(nilLiteral: ()) {
+        self = .undefined
+    }
+    public init(stringLiteral value: String) {
+        self = .string(value)
+    }
+    public init(booleanLiteral value: Bool) {
+        self = .bool(value)
+    }
+    public init(integerLiteral value: Int) {
+        self = .int(value)
     }
 }

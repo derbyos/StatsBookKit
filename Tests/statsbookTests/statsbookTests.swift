@@ -44,11 +44,14 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
     }
     
     func testFormula() throws {
-        let file = try loadBlankFile()
+        let file = try loadSampleFile()
         let sheet = try file.sheet(named: "Score")
+        // home color
         let cell = sheet[row: 1, col: "A"]!
         let formulaSource = cell.formula!
-        let formula = try Formula(source: formulaSource)
+        let formula = try Formula(source: formulaSource, sheet: sheet)
         print(formula)
+//        print(try formula.eval())
+        XCTAssertEqual(try formula.eval(), "North Star Roller Derby / NSRD Supernovas")
     }
 }
