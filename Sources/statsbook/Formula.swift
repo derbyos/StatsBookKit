@@ -75,6 +75,14 @@ public struct Formula {
         case bool(Bool)
         case undefined
         
+        var asNumber: Double? {
+            switch self {
+            case .number(let d): return d
+            case .undefined: return 0.0
+            case .bool(let b): return b ? 1.0 : 0.0
+            case .string: return nil
+            }
+        }
         var isTrue: Bool {
             switch self {
             case .bool(let b): return b

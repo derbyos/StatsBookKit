@@ -61,5 +61,26 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
         XCTAssertEqual(try formula5.eval(), 3.0)
         let formula3 = sheet[row: 42, col: "V"]!.formula!
         XCTAssertEqual(try formula3.eval(), 3.0)
+        
+        for row in 1...84 {
+            var cols = [String]()
+            for col in 0 ... 37 {
+                guard let f = sheet[row: row, col: Address.columnName(col)], let value = try f.eval(force: true) else {
+                    cols.append("")
+                    continue
+                }
+                switch value {
+                case .bool(let b):
+                    cols.append(String(describing: b))
+                case .number(let d):
+                    cols.append(String(describing: d))
+                case .string(let s):
+                    cols.append(s)
+                case .undefined:
+                    cols.append("*")
+                }
+            }
+            print(row, cols.joined(separator: "|"))
+        }
     }
 }

@@ -101,7 +101,7 @@ extension Formula {
             }
             let test = try eval(op:param.last!)
             var total = 0.0
-            for value in try flatten(param: param) {
+            for value in try flatten(param: param.dropLast()) {
                 if value == test {
                     total += 1
                 }
@@ -174,22 +174,22 @@ extension Formula {
                 throw Errors.typeMismatch(">=")
             }
         case .add:
-            guard case let .number(ln) = l, case let .number(rn) = try eval(op: rhs)  else {
+            guard let ln = l.asNumber, let rn = try eval(op: rhs).asNumber  else {
                 throw Errors.typeMismatch("+")
             }
             return .number(ln + rn)
         case .sub:
-            guard case let .number(ln) = l, case let .number(rn) = try eval(op: rhs)  else {
+            guard let ln = l.asNumber, let rn = try eval(op: rhs).asNumber  else {
                 throw Errors.typeMismatch("-")
             }
             return .number(ln - rn)
         case .mul:
-            guard case let .number(ln) = l, case let .number(rn) = try eval(op: rhs)  else {
+            guard let ln = l.asNumber, let rn = try eval(op: rhs).asNumber  else {
                 throw Errors.typeMismatch("*")
             }
             return .number(ln * rn)
         case .div:
-            guard case let .number(ln) = l, case let .number(rn) = try eval(op: rhs)  else {
+            guard let ln = l.asNumber, let rn = try eval(op: rhs).asNumber  else {
                 throw Errors.typeMismatch("/")
             }
             return .number(ln / rn)
@@ -252,10 +252,17 @@ extension Cell {
         }
     }
     
-    func eval(force: Bool = false) throws -> Formula.Value? {
+    func eval(force: Bool = true) throws -> Formula.Value? {
+        if let addr = Address(xml["r"]), let value =  sheet.cachedValues[addr] {
+            return value
+        }
         if force { // ignore value, re-calcuate formula
             if let f = formula {
-                return try f.eval()
+                let retval = try f.eval()
+                if let addr = Address(xml["r"]) {
+                    sheet.cachedValues[addr] = retval
+                }
+                return retval
             }
         }
         // check value first
@@ -263,7 +270,11 @@ extension Cell {
             return value
         } else {
             if let f = formula {
-                return try f.eval()
+                let retval = try f.eval()
+                if let addr = Address(xml["r"]) {
+                    sheet.cachedValues[addr] = retval
+                }
+                return retval
             } else {// no value, no formula
                 return nil
             }

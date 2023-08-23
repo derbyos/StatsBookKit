@@ -71,6 +71,8 @@ public class Sheet {
         cell(row: row, col: col)
     }
     
+    var cachedValues: [Address: Formula.Value] = [:]
+    
     var sharedFormulas: [String: (Address,String)] = [:]
     func shared(formula: String) -> (Address,String)? {
         if sharedFormulas.isEmpty {
