@@ -53,5 +53,8 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
         print(formula)
 //        print(try formula.eval())
         XCTAssertEqual(try formula.eval(), "North Star Roller Derby / NSRD Supernovas")
+        
+        let formula2 = try Formula(source: sheet[row: 42, col: "A"]!.formula!, sheet: sheet)
+        XCTAssertEqual(try formula2.eval(), 20.0)
     }
 }
