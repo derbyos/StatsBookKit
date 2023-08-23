@@ -107,13 +107,63 @@ extension Formula {
             return try .bool(l == eval(op: rhs))
         case .ne:
             return try .bool(l != eval(op: rhs))
+        case .lt:
+            let r = try eval(op: rhs)
+            switch (l,r) {
+            case (.number(let ln), .number(let rn)): return .bool(ln < rn)
+            case (.string(let ln), .string(let rn)): return .bool(ln < rn)
+            default:
+                throw Errors.typeMismatch("<")
+            }
+        case .gt:
+            let r = try eval(op: rhs)
+            switch (l,r) {
+            case (.number(let ln), .number(let rn)): return .bool(ln > rn)
+            case (.string(let ln), .string(let rn)): return .bool(ln > rn)
+            default:
+                throw Errors.typeMismatch(">")
+            }
+        case .le:
+            let r = try eval(op: rhs)
+            switch (l,r) {
+            case (.number(let ln), .number(let rn)): return .bool(ln <= rn)
+            case (.string(let ln), .string(let rn)): return .bool(ln <= rn)
+            default:
+                throw Errors.typeMismatch("<=")
+            }
+        case .ge:
+            let r = try eval(op: rhs)
+            switch (l,r) {
+            case (.number(let ln), .number(let rn)): return .bool(ln >= rn)
+            case (.string(let ln), .string(let rn)): return .bool(ln >= rn)
+            default:
+                throw Errors.typeMismatch(">=")
+            }
+        case .add:
+            guard case let .number(ln) = l, case let .number(rn) = try eval(op: rhs)  else {
+                throw Errors.typeMismatch("+")
+            }
+            return .number(ln + rn)
+        case .sub:
+            guard case let .number(ln) = l, case let .number(rn) = try eval(op: rhs)  else {
+                throw Errors.typeMismatch("-")
+            }
+            return .number(ln - rn)
+        case .mul:
+            guard case let .number(ln) = l, case let .number(rn) = try eval(op: rhs)  else {
+                throw Errors.typeMismatch("*")
+            }
+            return .number(ln * rn)
+        case .div:
+            guard case let .number(ln) = l, case let .number(rn) = try eval(op: rhs)  else {
+                throw Errors.typeMismatch("/")
+            }
+            return .number(ln / rn)
         case .concat:
             guard case let .string(lstring) = l, case let .string(rstring) = try eval(op: rhs) else {
                 throw Errors.typeMismatch("Concat operator requires two strings")
             }
             return .string(lstring + rstring)
-        default:
-            throw Errors.unimplementedFunction(binOp.rawValue)
         }
     }
     
