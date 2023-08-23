@@ -55,3 +55,43 @@ struct Cell {
         sheet.comments?.firstChild(named: "comments")?.firstChild(named: "commentList")?.firstChild(where: {$0["ref"] == xml["r"]})?.asString
     }
 }
+
+@propertyWrapper
+public struct StringCell {
+    public var wrappedValue: String? {
+        get {
+            sheet[row: row, col: col]?.stringValue
+        }
+    }
+    public var comment: String? {
+        sheet[row: row, col: col]?.comment
+    }
+    var sheet: Sheet!
+    var row: Int
+    var col: String
+    public init(sheet: Sheet!, row: Int, col: String) {
+        self.sheet = sheet
+        self.row = row
+        self.col = col
+    }
+}
+
+@propertyWrapper
+public struct IntCell {
+    public var wrappedValue: Int? {
+        get {
+            sheet[row: row, col: col]?.intValue
+        }
+    }
+    public var comment: String? {
+        sheet[row: row, col: col]?.comment
+    }
+    var sheet: Sheet!
+    var row: Int
+    var col: String
+    public init(sheet: Sheet! = nil, row: Int, col: String) {
+        self.sheet = sheet
+        self.row = row
+        self.col = col
+    }
+}

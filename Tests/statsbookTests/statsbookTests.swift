@@ -12,7 +12,10 @@ final class statsbookTests: XCTestCase {
     func loadBlankFile() throws -> StatsBookFile {
         try .init(URL(fileURLWithPath: "/Users/gandreas/Downloads/wftda-statsbook-full-us-letter.xlsx"))
     }
-    
+    func loadSampleFile() throws -> StatsBookFile {
+        try .init(URL(fileURLWithPath: "/Users/gandreas/Downloads/STATS-2023-04-30_NSRDSupernovas_vs_DRDAllstars_1.xlsx"))
+    }
+
     func testLoading() throws {
         let file = try loadBlankFile()
         print(file.zipFile.entries.keys)
@@ -31,5 +34,12 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
         XCTAssertEqual(a1.adding(column: 1).column, "C")
         XCTAssertEqual(Address(row: 5, column: "Z").adding(column: 1).column, "AA")
         XCTAssertEqual(Address(row: 5, column: "AA").adding(column: -1).column, "Z")
+    }
+    
+    func testRead() throws {
+        let file = try loadSampleFile()
+        let igrf = file.igrf
+        XCTAssertEqual(igrf.home.league, "North Star Roller Derby")
+//        print("\(igrf.home.league ?? "")")
     }
 }

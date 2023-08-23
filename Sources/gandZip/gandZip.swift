@@ -128,14 +128,20 @@ public struct ZipReader {
         }
         var retval: Data = Data()
         try data.withUnsafeBytes { buffer in
-            let t = buffer.baseAddress! + Int(range.lowerBound)
-            let header = t.bindMemory(to: LocalFileHeader.self, capacity: 1).pointee
-//            print("Uncompressing \(header)")
             if range.count == 0 {
                 retval = Data()
                 return
             }
+            let t = buffer.baseAddress! + Int(range.lowerBound)
+            let header = t.bindMemory(to: LocalFileHeader.self, capacity: 1).pointee
+            var dataDescriptor: DataDescriptor = .init(crc32: header.crc32, compressedSize: header.compressedSize, unCompressedSize: header.unCompressedSize)
             let dataStart = t + MemoryLayout<LocalFileHeader>.stride + Int(CFSwapInt16LittleToHost(header.fileNameLength)) + Int(CFSwapInt16LittleToHost(header.extraFieldLength))
+            if GeneralPurposeFlag(rawValue: header.generalFlags).contains(.HasDataDescriptor) {
+                // data descriptor is after the data
+                let t2 = dataStart + range.count + 4 // 4 being the size of the end signature
+                dataDescriptor = t2.bindMemory(to: DataDescriptor.self, capacity: 1).pointee
+            }
+//            print("Uncompressing \(header)")
             // NB: compressedSize is usually 0
             let dataBuffer = dataStart.bindMemory(to: UInt8.self, capacity: range.count)
             let compressedData = Data(buffer: UnsafeBufferPointer<UInt8>(start: dataBuffer, count: range.count))
@@ -144,7 +150,7 @@ public struct ZipReader {
             case .None:
                 retval = compressedData
             case .Deflated:
-                retval = ZipReader.gZipDecompress(compressedData, size: Int(CFSwapInt32LittleToHost(header.unCompressedSize)))
+                retval = ZipReader.gZipDecompress(compressedData, size: Int(CFSwapInt32LittleToHost(dataDescriptor.unCompressedSize)))
             case .none:
                 throw Errors.unknownCompressionMethod(Int(CFSwapInt16LittleToHost(header.compression)))
             default:
