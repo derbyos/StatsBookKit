@@ -60,18 +60,18 @@ extension Formula {
                 scanner.scanLocation = pos
             }
         }
-        var hasDollar = scanner.scanString("$") != nil
+        let anchorCol = scanner.scanString("$") != nil
         if let name = scanner.scanCharacters(from: .uppercaseLetters) {
-            hasDollar = scanner.scanString("$") != nil || hasDollar
+            let anchorRow = scanner.scanString("$") != nil
             var i = 0
             if scanner.scanInt(&i) {
                 if let sheetName {
-                    return .referenceNonLocalCell(sheetName, Address(row: i, column: name))
+                    return .referenceNonLocalCell(sheetName, Address(row: i, anchorRow: anchorRow, column: name, anchorColumn: anchorCol))
                 } else {
-                    return .referenceCell(Address(row: i, column: name))
+                    return .referenceCell(Address(row: i, anchorRow: anchorRow, column: name, anchorColumn: anchorCol))
                 }
             } else {
-                if hasDollar {
+                if anchorRow || anchorCol {
                     throw Errors.malformedCellAddress
                 }
                 // otherwise it may just be a name for some reason

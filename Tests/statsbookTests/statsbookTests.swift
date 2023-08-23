@@ -48,13 +48,18 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
         let sheet = try file.sheet(named: "Score")
         // home color
         let cell = sheet[row: 1, col: "A"]!
-        let formulaSource = cell.formula!
-        let formula = try Formula(source: formulaSource, sheet: sheet)
-        print(formula)
+        let formula = cell.formula!
 //        print(try formula.eval())
         XCTAssertEqual(try formula.eval(), "North Star Roller Derby / NSRD Supernovas")
         
-        let formula2 = try Formula(source: sheet[row: 42, col: "A"]!.formula!, sheet: sheet)
+        let formula2 = sheet[row: 42, col: "A"]!.formula!
         XCTAssertEqual(try formula2.eval(), 20.0)
+        let formula4 = sheet[row: 42, col: "T"]!.formula!
+        XCTAssertEqual(try formula4.eval(), 20.0)
+        // this is a shared formula
+        let formula5 = sheet[row: 5, col: "Q"]!.formula!
+        XCTAssertEqual(try formula5.eval(), 3.0)
+        let formula3 = sheet[row: 42, col: "V"]!.formula!
+        XCTAssertEqual(try formula3.eval(), 3.0)
     }
 }

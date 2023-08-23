@@ -70,5 +70,25 @@ public class Sheet {
     subscript(row row: Int, col col: String) -> Cell? {
         cell(row: row, col: col)
     }
+    
+    var sharedFormulas: [String: (Address,String)] = [:]
+    func shared(formula: String) -> (Address,String)? {
+        if sharedFormulas.isEmpty {
+            // build the table
+            for row in xml.firstChild(named: "worksheet")?.firstChild(named: "sheetData")?.allChildren(named: "row") ?? [] {
+                for cell in row.allChildren(named: "c") {
+                    if let f = cell.firstChild(named: "f"), let addr = Address(cell["r"]) {
+                        if f["t"] == "shared", let si = f["si"] {
+                            let formula = f.asString
+                            if formula.isEmpty == false {
+                                sharedFormulas[si] = (addr,formula)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return sharedFormulas[formula]
+    }
 }
 

@@ -95,6 +95,40 @@ extension Formula {
                 }
             }
             return .number(total)
+        case "COUNTIF":
+            guard param.count > 1 else {
+                throw Errors.typeMismatch("COUNTIF(value,value)")
+            }
+            let test = try eval(op:param.last!)
+            var total = 0.0
+            for value in try flatten(param: param) {
+                if value == test {
+                    total += 1
+                }
+            }
+            return .number(total)
+        case "MAX":
+            var total = -Double.infinity
+            for value in try flatten(param: param) {
+                if case .number(let i) = value {
+                    total = max(total, i)
+                }
+            }
+            if total == -Double.infinity {
+                return .undefined
+            }
+            return .number(total)
+        case "MIN":
+            var total = Double.infinity
+            for value in try flatten(param: param) {
+                if case .number(let i) = value {
+                    total = min(total, i)
+                }
+            }
+            if total == Double.infinity {
+                return .undefined
+            }
+            return .number(total)
         default:
             throw Errors.unimplementedFunction(fn)
         }
@@ -178,7 +212,7 @@ extension Formula {
             return .undefined
         }
         // do we want to eval this formula?
-        guard let value = cell.value else {
+        guard let value = try cell.eval() else {
             return .undefined
         }
         return value
@@ -220,18 +254,16 @@ extension Cell {
     
     func eval(force: Bool = false) throws -> Formula.Value? {
         if force { // ignore value, re-calcuate formula
-            if let fSource = formula {
-                let formula = try Formula(source: fSource, sheet: sheet)
-                return try formula.eval()
+            if let f = formula {
+                return try f.eval()
             }
         }
         // check value first
         if let value = self.value {
             return value
         } else {
-            if let fSource = formula {
-                let formula = try Formula(source: fSource, sheet: sheet)
-                return try formula.eval()
+            if let f = formula {
+                return try f.eval()
             } else {// no value, no formula
                 return nil
             }

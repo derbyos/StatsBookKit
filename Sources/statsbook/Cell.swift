@@ -47,8 +47,24 @@ struct Cell {
         }
     }
 
-    var formula: String? {
-        return xml.firstChild(named: "f")?.asString
+    var formula: Formula? {
+        guard let f = xml.firstChild(named: "f") else {
+            return nil
+        }
+        if f["t"] == "shared", let si = f["si"] {
+            // shared
+            if let sharedFormula = sheet.shared(formula: si) {
+                // TODO: Convert to relative formula
+                guard let f = try? Formula(source:sharedFormula.1, sheet: sheet) else {
+                    return nil
+                }
+                if let here = Address(xml["r"]) {
+                    let delta = sharedFormula.0.delta(to: here)
+                    return f.offset(by: delta)
+                }
+            }
+        }
+        return try? Formula(source: f.asString, sheet: sheet)
     }
     
     var comment: String? {
