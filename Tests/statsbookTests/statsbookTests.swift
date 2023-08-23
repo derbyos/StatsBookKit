@@ -42,4 +42,13 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
         XCTAssertEqual(igrf.home.league, "North Star Roller Derby")
 //        print("\(igrf.home.league ?? "")")
     }
+    
+    func testFormula() throws {
+        let file = try loadBlankFile()
+        let sheet = try file.sheet(named: "Score")
+        let cell = sheet[row: 1, col: "A"]!
+        let formulaSource = cell.formula!
+        let formula = try Formula(source: formulaSource)
+        print(formula)
+    }
 }
