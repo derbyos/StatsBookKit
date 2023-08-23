@@ -8,4 +8,28 @@ final class statsbookTests: XCTestCase {
         // results.
         XCTAssertEqual(statsbook().text, "Hello, World!")
     }
+    
+    func loadBlankFile() throws -> StatsBookFile {
+        try .init(URL(fileURLWithPath: "/Users/gandreas/Downloads/wftda-statsbook-full-us-letter.xlsx"))
+    }
+    
+    func testLoading() throws {
+        let file = try loadBlankFile()
+        print(file.zipFile.entries.keys)
+        XCTAssertEqual(try file.sheet(named: "Read Me")[row: 1, col: "A"]?.stringValue, "Women\'s Flat Track Derby Association")
+        XCTAssertEqual(file.igrf.sheet[row: 3, col: "L"]?.comment, """
+Hint:
+Use this for doubleheaders or multi-game events. It will print on other sheets. 
+
+Does not have to be entered as "A" or "B"; alphanumeric and multiple characters are honored.
+""")
+    }
+    
+    func testAddresses() {
+        let a1 = Address(row: 5, column: "B")
+        XCTAssertEqual(a1.adding(row: 3).row, a1.row + 3)
+        XCTAssertEqual(a1.adding(column: 1).column, "C")
+        XCTAssertEqual(Address(row: 5, column: "Z").adding(column: 1).column, "AA")
+        XCTAssertEqual(Address(row: 5, column: "AA").adding(column: -1).column, "Z")
+    }
 }
