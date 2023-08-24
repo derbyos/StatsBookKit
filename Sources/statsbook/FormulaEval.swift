@@ -251,8 +251,14 @@ extension Cell {
                 return nil
             }
             return sheet.file[sharedString: sharedID].map{.string($0)}
-        case "str":
+        case "str": // more accurately, cell containing formula
             return xml.firstChild(named: "v").map{.string($0.asString)}
+        case "inlinestr":
+            return xml.firstChild(named: "v").map{.string($0.asString)}
+//        case "b": // boolean
+//            return xml.firstChild(named: "v").map{.string($0.asString)}
+//        case "d": // date
+//            return xml.firstChild(named: "v").map{.string($0.asString)}
         case "n":
             return xml.firstChild(named: "v").flatMap{Double($0.asString)}.map{.number($0)}
         default:

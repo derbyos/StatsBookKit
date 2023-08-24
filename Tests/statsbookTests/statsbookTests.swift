@@ -73,6 +73,13 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
         XCTAssertEqual(try formula3.eval(), 10.0)
     }
     
+    func testStyles() throws {
+        let file = try loadSampleFile()
+        let sheet = try file.sheet(named: "IGRF")
+        // Start Time
+        let startTime = sheet[row: 7, col: "I"]!
+        XCTAssertEqual(startTime.styleFormat?.numberFormat, "h:mm\\ AM/PM;@")
+    }
     func printSheet(_ sheetName: String, bottomRight: Address) throws {
         let file = try loadSampleFile()
         let sheet = try file.sheet(named: sheetName)

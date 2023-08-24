@@ -19,7 +19,14 @@ public class StatsBookFile {
     
     /// The xml of the workbook
     let workbookXML : XML
+
+    /// The xml of the styles document
+    let stylesXML : XML
     
+    lazy var styles: Styles = {
+        Styles(xml: stylesXML)
+    }()
+
     /// The worksheet rels
     var worksheetRels : [String: String] = [:]
     
@@ -38,7 +45,13 @@ public class StatsBookFile {
             throw Errors.missingWorkbook
         }
         workbookXML = wbxml
-        
+
+        let stylesData = try zipFile.data(for: "xl/styles.xml")
+        guard let styleXML = try XML(stylesData).firstChild(named: "styleSheet") else {
+            throw Errors.missingWorkbook
+        }
+        self.stylesXML = styleXML
+
         version = .January2019
         try buildWorksheetRL()
         try buildSharedStrings()
