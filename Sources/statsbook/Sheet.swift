@@ -63,7 +63,7 @@ public class Sheet {
             return nil
         }
         let colRow = "\(col)\(rowString)"
-        return rowXML.allChildren(named: "c").first(where: {$0["r"] == colRow}).map({.init(sheet: self, xml: $0)})
+        return rowXML.allChildren(named: "c").first(where: {$0["r"] == colRow}).map({.init(sheet: self, address: Address(row: row, column: col), xml: $0)})
     }
     
     subscript(address: Address) -> Cell? {
@@ -73,9 +73,65 @@ public class Sheet {
         cell(row: row, col: col)
     }
     
+    /// The current values for all cells, either from calculation or from
+    /// explicit setting.  Note that a cell with a value that hasn't changed
+    /// (and isn't a calculation) won't be here
     var cachedValues: [Address: Formula.Value] = [:]
     
+    /// Reset to sheet to its original values
+    func reset() {
+        cachedValues = [:]
+    }
+    
+    
+    /// Recalculate the sheet
+    /// - Parameter reset: Should the sheet be reset first?
+    func recalc(reset: Bool = false) throws {
+        if reset {
+            self.reset()
+        }
+        for row in xml.firstChild(named: "worksheet")?.firstChild(named: "sheetData")?.allChildren(named: "row") ?? [] {
+            for cellXML in row.allChildren(named: "c") {
+                guard let addr = Address(cellXML["r"]) else {
+                    continue
+                }
+                let cell = Cell(sheet: self, address: addr, xml: cellXML)
+                if let formula = cell.formula {
+                    cachedValues[addr] = try formula.eval()
+                } else {
+                    assert(cell.formulaSource == nil)
+                }
+            }
+        }
+    }
+    
+    /// Find the bottom right cell with content - note that it may not have content
+    /// but a rectangle from A1 to this cell will include all the content
+    var bottomRight : Address {
+        var retval = Address(row: 1, column: "A")
+        for row in xml.firstChild(named: "rows")?.allChildren(named: "row") ?? [] {
+            for cellXML in row.allChildren(named: "c") {
+                guard let addr = Address(cellXML["r"]) else {
+                    continue
+                }
+                let cell = Cell(sheet: self, address: addr, xml: cellXML)
+                if cell.value != nil {
+                    if addr.row > retval.row {
+                        retval.row = addr.row
+                    }
+                    if addr.columnNumber > retval.columnNumber {
+                        retval.columnNumber = addr.columnNumber
+                    }
+                }
+            }
+        }
+        return retval
+    }
+    /// The shared formulas for this sheet
     var sharedFormulas: [String: (Address,String)] = [:]
+    /// Lookup the shared formula (unlocalized)
+    /// - Parameter formula: The formula index
+    /// - Returns: The base address of the formula, and the formula text
     func shared(formula: String) -> (Address,String)? {
         if sharedFormulas.isEmpty {
             // build the table
@@ -93,6 +149,102 @@ public class Sheet {
             }
         }
         return sharedFormulas[formula]
+    }
+    
+    
+    /// Lookup the comments for a given cell by address
+    /// - Parameter addr: The cell address
+    /// - Returns: The XML of that comment
+    func comment(for addr: Address) -> XML? {
+        comments?.firstChild(named: "comments")?.firstChild(named: "commentList")?.firstChild(where: {$0["ref"] == addr.description})
+    }
+    
+    /// Fetch the author of a comment based on the author ID
+    /// - Parameter author: The ID as a string
+    /// - Returns: The author if found
+    func comment(author: String?) -> String? {
+        guard let author, let index = Int(author) else {
+            return nil
+        }
+        guard let authors = comments?.firstChild(named: "authors")?.allChildren(named: "author") else {
+            return nil
+        }
+        if index >= 0 && index < authors.count {
+            return authors[index].asString
+        }
+        return nil
+    }
+    
+    /// Given the current values saved in this sheet, weave that into the XML for the sheet
+    /// - Returns: The new XML with updated values
+    func save() -> XML {
+        xml.walkAndUpdate { xml in
+            switch xml {
+            case .element(let name, namespace: let namespace, qName: let qname, attributes: let attributes, children: let children):
+                if name == "c" {
+                    guard let addr = Address(attributes["r"]) else {
+                        return nil // keep going
+                    }
+                    guard let newValue = cachedValues[addr] else {
+                        return nil // unchanged
+                    }
+                    let cell = Cell(sheet: self, address: addr, xml: xml)
+                    let oldValue = cell.value
+                    if newValue == oldValue {
+                        return nil // unchanged
+                    }
+                    // we need to update with the new value, but we also need to keep the formula
+                    var newAttr = attributes
+                    var newV: XML?
+                    var newType: String?
+                    switch newValue {
+                    case .bool(let b):
+                        newType = "b"
+                        newV = .element("v", namespace: nil, qName: nil, attributes: [:], children: [.characters(b ? "1" : "0")])
+                    case .number(let n):
+                        newType = "n"
+                        newV = .element("v", namespace: nil, qName: nil, attributes: [:], children: [.characters("\(n)")])
+                    case .string(let s):
+                        if let shared = file.lookup(sharedString: s) {
+                            newType = "s"
+                            newV = .element("v", namespace: nil, qName: nil, attributes: [:], children: [.characters("\(shared)")])
+                        } else {
+                            newType = "inlinestr" // don't mess with shared strings yet
+                            newV = .element("v", namespace: nil, qName: nil, attributes: [:], children: [.characters(s)])
+                        }
+                    case .undefined:
+                        // remove the contents
+                        newType = nil
+                        newV = nil
+                    }
+                    // now replace the V element
+                    let vIndex = children.firstIndex { xml in
+                        if case .element("v", _, _, _, _) = xml {
+                            return false
+                        }
+                        return true
+                    }
+                    var newChildren = children
+                    if let vIndex {
+                        if let newV {
+                            newChildren[vIndex] = newV
+                        } else {
+                            // delete it
+                            newChildren.remove(at: vIndex)
+                        }
+                    }
+                    // and update the type (note that formula don't change)
+                    if cell.formulaSource == nil {
+                        newAttr["t"] = newType
+                    }
+                    return .element(name, namespace: namespace, qName: qname, attributes: newAttr, children: newChildren)
+                } else {
+                    return nil
+                }
+            default:
+                return nil
+            }
+        }
     }
 }
 

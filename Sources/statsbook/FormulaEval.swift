@@ -146,9 +146,22 @@ extension Formula {
         let l = try eval(op: lhs)
         switch binOp {
         case .eq:
-            return try .bool(l == eval(op: rhs))
+            let r = try eval(op: rhs)
+            switch (l,r) {
+                // empty cells are empty strings
+            case (.string(""), .undefined), (.undefined, .string("")):
+                return true
+            default:
+                return .bool(l == r)
+            }
         case .ne:
-            return try .bool(l != eval(op: rhs))
+            let r = try eval(op: rhs)
+            switch (l,r) {
+            case (.string(""), .undefined), (.undefined, .string("")):
+                return false
+            default:
+                return .bool(l != r)
+            }
         case .lt:
             let r = try eval(op: rhs)
             switch (l,r) {
@@ -244,6 +257,8 @@ extension Formula {
 }
 
 extension Cell {
+    /// The current embedded value in the XML, potentially including shared strings, etc...
+    /// but not calculated or cached in the sheet
     var value: Formula.Value? {
         switch xml["t"] {
         case "s":
@@ -262,20 +277,25 @@ extension Cell {
         case "n":
             return xml.firstChild(named: "v").flatMap{Double($0.asString)}.map{.number($0)}
         default:
+            // for untyped results from formulas
+            if let v = xml.firstChild(named: "v") {
+                if let d = Double(v.asString) {
+                    return .number(d)
+                }
+                return .string(v.asString)
+            }
             return nil
         }
     }
     
     func eval(force: Bool = true) throws -> Formula.Value? {
-        if let addr = Address(xml["r"]), let value =  sheet.cachedValues[addr] {
+        if let value =  sheet.cachedValues[address] {
             return value
         }
         if force { // ignore value, re-calcuate formula
             if let f = formula {
                 let retval = try f.eval()
-                if let addr = Address(xml["r"]) {
-                    sheet.cachedValues[addr] = retval
-                }
+                sheet.cachedValues[address] = retval
                 return retval
             }
         }
@@ -285,9 +305,7 @@ extension Cell {
         } else {
             if let f = formula {
                 let retval = try f.eval()
-                if let addr = Address(xml["r"]) {
-                    sheet.cachedValues[addr] = retval
-                }
+                sheet.cachedValues[address] = retval
                 return retval
             } else {// no value, no formula
                 return nil

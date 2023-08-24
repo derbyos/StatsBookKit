@@ -9,7 +9,7 @@ import Foundation
 
 
 /// An address in a cell (row/column)
-struct Address : Equatable, Hashable {
+struct Address : Equatable, Hashable, CustomStringConvertible {
     internal init(row: Int, anchorRow: Bool = false, column: String, anchorColumn: Bool = false) {
         self.row = row
         self.anchorRow = anchorRow
@@ -41,22 +41,32 @@ struct Address : Equatable, Hashable {
         row = rowNumber
         column = col
     }
+    
+    /// Convert back to $A$1 format
+    public var description: String {
+        "\(anchorColumn ? "$":"")\(column)\(anchorRow ? "$":"")\(row)"
+    }
     /// Convert column letters to indices (only support single and double letter column names).  Zero based, so column "A" is 0
     var columnNumber: Int {
-        var retval = 0
-        var first = true
-        for letter in column {
-            if first {
-                first = false
-            } else { // convert "A" (0) to 26
-                retval = (retval + 1) * 26
+        get {
+            var retval = 0
+            var first = true
+            for letter in column {
+                if first {
+                    first = false
+                } else { // convert "A" (0) to 26
+                    retval = (retval + 1) * 26
+                }
+                guard let v = letter.asciiValue, v >= Character("A").asciiValue! && v <= Character("Z").asciiValue! else {
+                    continue
+                }
+                retval += Int(v) - Int(Character("A").asciiValue!)
             }
-            guard let v = letter.asciiValue, v >= Character("A").asciiValue! && v <= Character("Z").asciiValue! else {
-                continue
-            }
-            retval += Int(v) - Int(Character("A").asciiValue!)
+            return retval
         }
-        return retval
+        set {
+            column = Address.columnName(newValue)
+        }
     }
     /// Convert column indices to letters (only support single and double letter column names)
     static func columnName(_ number: Int) -> String {

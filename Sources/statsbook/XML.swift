@@ -10,7 +10,7 @@ import Foundation
 
 /// A delegate of the XMLParser that builds our XML tree document
 fileprivate class XMLBuilder : NSObject, XMLParserDelegate {
-    var root: XML = .document([])
+    var root: XML = .empty // start with nothing
     
     var nest: [XML] = []
     /// add this to the "node"
@@ -82,7 +82,8 @@ fileprivate class XMLBuilder : NSObject, XMLParserDelegate {
     }
 }
 /// A very simple XML model
-enum XML {
+enum XML : Equatable {
+    case empty // special case not existing in the file
     case document([XML])
     case cdata(Data)
     case characters(String)
@@ -226,6 +227,57 @@ extension XML : CustomStringConvertible {
             return ""
         default:
             fatalError("Unsupported XML serialization \(self)")
+        }
+    }
+}
+
+extension XML {
+    /// Walk through the XML tree, and pass in each node to the
+    /// walker function.  That function should return nil (to keep walking)
+    /// or a new XML value to replace this item.  Return ".empty" to
+    /// delete the item
+    /// - Parameter walker: The walker function
+    /// - Returns: The resulting value
+    ///
+    func walkAndUpdate(walker: (XML)->XML?) -> XML {
+        func process(children: [XML]) -> [XML] {
+            var retval = [XML]()
+            for child in children {
+                let walked = walker(child)
+                switch walked {
+                case .none:
+                    // keep going into children
+                    retval.append(child.walkAndUpdate(walker: walker))
+                case .empty:
+                    // delete this
+                    break
+                case .some(let value):
+                    // replace this
+                    retval.append(value)
+                }
+            }
+            retval.removeAll(where: {$0 == .empty})
+            return retval
+        }
+        switch self {
+        case .empty:
+            return .empty
+        case .document(let children):
+            return .document(process(children: children))
+        case .element(let name, namespace: let namespace, qName: let qname, attributes: let attributes, children: let children):
+            switch walker(self) {
+            case .none:
+                return .element(name, namespace: namespace, qName: qname, attributes: attributes, children: process(children: children))
+            case .some(let v):
+                return v
+            }
+        default:
+            switch walker(self) {
+            case .none:
+                return self // unchanged (and no children
+            case .some(let v):
+                return v
+            }
         }
     }
 }

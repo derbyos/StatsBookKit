@@ -116,7 +116,13 @@ public class StatsBookFile {
         }
         return sharedStrings[sharedID].asString
     }
-
+    
+    /// Find if the string is in the shared strings, if so return the index
+    /// - Parameter sharedString: The string to search for
+    /// - Returns: The index, if found
+    public func lookup(sharedString: String) -> Int? {
+        sharedStrings.firstIndex { $0.asString == sharedString }
+    }
     /// A cache of all the sheets we've loaded
     var cachedSheets: [String : Sheet] = [:]
     /// Load a sheet by name, using the cached version if needed

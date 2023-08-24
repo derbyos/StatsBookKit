@@ -11,8 +11,10 @@ import Foundation
 struct Cell {
     var sheet: Sheet
     var xml: XML
-    init(sheet: Sheet, xml: XML) {
+    var address: Address
+    init(sheet: Sheet, address: Address, xml: XML) {
         self.sheet = sheet
+        self.address = address
         self.xml = xml
     }
     
@@ -46,7 +48,17 @@ struct Cell {
             return nil
         }
     }
-
+    
+    /// The formula source in this cell (as a string, not converted to localized, since that requires parsing the formula)
+    var formulaSource: String? {
+        switch xml["t"] {
+        case "str":
+            return xml.firstChild(named: "f")?.asString
+        default:
+            return nil
+        }
+    }
+    /// The "compiled" formula for the cell (localized if needed)
     var formula: Formula? {
         guard let f = xml.firstChild(named: "f") else {
             return nil
@@ -54,21 +66,18 @@ struct Cell {
         if f["t"] == "shared", let si = f["si"] {
             // shared
             if let sharedFormula = sheet.shared(formula: si) {
-                // TODO: Convert to relative formula
                 guard let f = try? Formula(source:sharedFormula.1, sheet: sheet) else {
                     return nil
                 }
-                if let here = Address(xml["r"]) {
-                    let delta = sharedFormula.0.delta(to: here)
-                    return f.offset(by: delta)
-                }
+                let delta = sharedFormula.0.delta(to: self.address)
+                return f.offset(by: delta)
             }
         }
         return try? Formula(source: f.asString, sheet: sheet)
     }
     
-    var comment: String? {
-        sheet.comments?.firstChild(named: "comments")?.firstChild(named: "commentList")?.firstChild(where: {$0["ref"] == xml["r"]})?.asString
+    var comment: Comment? {
+        sheet.comment(for: address).map{Comment(xml: $0, sheet: sheet)}
     }
 }
 
@@ -79,7 +88,7 @@ public struct StringCell {
             sheet[row: row, col: col]?.stringValue
         }
     }
-    public var comment: String? {
+    public var comment: Comment? {
         sheet[row: row, col: col]?.comment
     }
     var sheet: Sheet!
@@ -99,7 +108,7 @@ public struct IntCell {
             sheet[row: row, col: col]?.intValue
         }
     }
-    public var comment: String? {
+    public var comment: Comment? {
         sheet[row: row, col: col]?.comment
     }
     var sheet: Sheet!

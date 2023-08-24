@@ -15,12 +15,12 @@ final class statsbookTests: XCTestCase {
     func loadSampleFile() throws -> StatsBookFile {
         try .init(URL(fileURLWithPath: "/Users/gandreas/Downloads/STATS-2023-04-30_NSRDSupernovas_vs_DRDAllstars_1.xlsx"))
     }
-
+    
     func testLoading() throws {
         let file = try loadBlankFile()
         print(file.zipFile.entries.keys)
         XCTAssertEqual(try file.sheet(named: "Read Me")[row: 1, col: "A"]?.stringValue, "Women\'s Flat Track Derby Association")
-        XCTAssertEqual(file.igrf.sheet[row: 3, col: "L"]?.comment, """
+        XCTAssertEqual(file.igrf.sheet[row: 3, col: "L"]?.comment?.commentText, """
 Hint:
 Use this for doubleheaders or multi-game events. It will print on other sheets. 
 
@@ -40,7 +40,7 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
         let file = try loadSampleFile()
         let igrf = file.igrf
         XCTAssertEqual(igrf.home.league, "North Star Roller Derby")
-//        print("\(igrf.home.league ?? "")")
+        //        print("\(igrf.home.league ?? "")")
     }
     
     func testFormula() throws {
@@ -49,7 +49,7 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
         // home color
         let cell = sheet[row: 1, col: "A"]!
         let formula = cell.formula!
-//        print(try formula.eval())
+        //        print(try formula.eval())
         XCTAssertEqual(try formula.eval(), "North Star Roller Derby / NSRD Supernovas")
         
         let formula2 = sheet[row: 42, col: "A"]!.formula!
@@ -83,6 +83,7 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
     func printSheet(_ sheetName: String, bottomRight: Address) throws {
         let file = try loadSampleFile()
         let sheet = try file.sheet(named: sheetName)
+        try sheet.recalc(reset: true)
         for row in 1...bottomRight.row {
             var cols = [String]()
             for col in 0 ... bottomRight.columnNumber {
@@ -105,6 +106,7 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
         }
     }
     
+    
     func testIGRFSheet() throws {
         try printSheet("IGRF", bottomRight: Address(row: 90, column: "M"))
     }
@@ -117,4 +119,18 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
     func testLineupsSheet() throws {
         try printSheet("Lineups", bottomRight: Address(row: 84, column: "AZ"))
     }
+    
+    func roundTripBlankFile(_ file: StatsBookFile, _ sheetName: String) throws {
+        let sheet = try file.sheet(named: sheetName)
+        try sheet.recalc(reset: true)
+        let saved = sheet.save()
+        XCTAssertEqual(sheet.xml, saved)
+    }
+    
+    func testSaveBlank() throws {
+        let file = try loadBlankFile()
+        try roundTripBlankFile(file, "IGRF")
+        try roundTripBlankFile(file, "Score")
+    }
+
 }
