@@ -52,7 +52,22 @@ struct GeneralPurposeFlag : OptionSet {
 
 public struct ZipReader {
     let data: Data
-    public var entries: [String: Range<Int>]
+    var entries: [String: Entry]
+    struct Entry {
+        /// full name
+        var name: String
+        /// range in original data
+        var range: Range<Int>
+        /// if we've modified it, this is the modified compressed data
+        var modified: Data?
+        /// the original local file header
+        var localHeader: LocalFileHeader
+        /// the original central file header
+        var header: CentralFileHeader
+    }
+    /// The name of the file entires in order
+    public var entryNames: [String] = []
+    
     public init(data: Data) {
         self.data = data
         entries = [:]
@@ -105,7 +120,13 @@ public struct ZipReader {
                 if Int32(CFSwapInt32LittleToHost(header.compressedSize)) < 0 {
                     fatalError("\(fileName) has compressed size header \(header)")
                 }
-                entries[fileName] = localOffset ..< localOffset + Int(CFSwapInt32LittleToHost(header.compressedSize))
+                let entry = Entry(name: fileName,
+                                  range: localOffset ..< localOffset + Int(CFSwapInt32LittleToHost(header.compressedSize)),
+                                  localHeader: localHeader,
+                                  header: header
+                                  )
+                entries[fileName] = entry
+                entryNames.append(fileName)
                 t += MemoryLayout<CentralFileHeader>.stride +
                     Int(CFSwapInt16LittleToHost(header.fileNameLength)) +
                     Int(CFSwapInt16LittleToHost(header.extraFieldLength)) +
@@ -120,9 +141,10 @@ public struct ZipReader {
         case unknownCompressionMethod(Int)
     }
     public func data(for path: String) throws -> Data {
-        guard let range = entries[path] else {
+        guard let entry = entries[path] else {
             throw Errors.noSuchFile(path)
         }
+        let range = entry.range
         if range.isEmpty {
             return Data()
         }
@@ -160,6 +182,12 @@ public struct ZipReader {
         return retval
     }
     
+    
+    public func replace(_ data: Data, for path: String) throws {
+        guard let range = entries[path] else {
+            throw Errors.noSuchFile(path)
+        }
+    }
     static func gZipDecompress(_ data: Data, size: Int) -> Data {
         let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: size)
         let result = data.subdata(in: 0 ..< data.count).withUnsafeBytes ({

@@ -9,7 +9,7 @@ import Foundation
 
 
 /// An address in a cell (row/column)
-struct Address : Equatable, Hashable, CustomStringConvertible {
+public struct Address : Equatable, Hashable, CustomStringConvertible {
     internal init(row: Int, anchorRow: Bool = false, column: String, anchorColumn: Bool = false) {
         self.row = row
         self.anchorRow = anchorRow

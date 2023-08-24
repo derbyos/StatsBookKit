@@ -76,7 +76,7 @@ public class Sheet {
     /// The current values for all cells, either from calculation or from
     /// explicit setting.  Note that a cell with a value that hasn't changed
     /// (and isn't a calculation) won't be here
-    var cachedValues: [Address: Formula.Value] = [:]
+    var cachedValues: [Address: Value] = [:]
     
     /// Reset to sheet to its original values
     func reset() {

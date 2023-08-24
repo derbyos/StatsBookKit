@@ -10,9 +10,10 @@ import Foundation
 
 /// Support for simple formulas
 public struct Formula {
-    internal init(root: Formula.Op, sheet: Sheet) {
+    internal init(root: Formula.Op, sheet: Sheet, address: Address) {
         self.root = root
         self.sheet = sheet
+        self.address = address
     }
     
     /// Errors found while parsing or executing the formula
@@ -29,8 +30,10 @@ public struct Formula {
     }
     var root: Op
     var sheet: Sheet
-    public init(source: String, sheet: Sheet) throws {
+    var address: Address
+    public init(source: String, sheet: Sheet, address: Address) throws {
         self.sheet = sheet
+        self.address = address
         let scanner = Scanner(string: source)
         root = .undefined
         // now we can call ourselves
@@ -69,51 +72,7 @@ public struct Formula {
         case binary(Op, Operator, Op)
         case prefix(Prefix, Op)
     }
-    public enum Value: Equatable {
-        case string(String)
-        case number(Double)
-        case bool(Bool)
-        case undefined
-        
-        var asNumber: Double? {
-            switch self {
-            case .number(let d): return d
-            case .undefined: return 0.0
-            case .bool(let b): return b ? 1.0 : 0.0
-            case .string: return nil
-            }
-        }
-        var isTrue: Bool {
-            switch self {
-            case .bool(let b): return b
-            case .number(let i): return i != 0
-            case .string(let s): return !s.isEmpty
-            case .undefined: return false
-            }
-        }
-        var isEmpty: Bool {
-            switch self {
-            case .undefined: return true
-            case .string(let s): return s.isEmpty
-            default: return false
-            }
-        }
-    }
-}
-
-extension Formula.Value : ExpressibleByNilLiteral, ExpressibleByStringLiteral, ExpressibleByFloatLiteral, ExpressibleByBooleanLiteral {
-    public init(nilLiteral: ()) {
-        self = .undefined
-    }
-    public init(stringLiteral value: String) {
-        self = .string(value)
-    }
-    public init(booleanLiteral value: Bool) {
-        self = .bool(value)
-    }
-    public init(floatLiteral value: Double) {
-        self = .number(value)
-    }
+    
 }
 
 extension Formula {
@@ -122,7 +81,7 @@ extension Formula {
     /// - Parameter by: The offset in rows and columns
     /// - Returns: The offset formula
     func offset(by: (dr: Int, dc: Int)) -> Formula {
-        .init(root: root.offset(by: by), sheet: sheet)
+        .init(root: root.offset(by: by), sheet: sheet, address: address.offset(by: by))
     }
 }
 

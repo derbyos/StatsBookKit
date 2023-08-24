@@ -66,14 +66,14 @@ struct Cell {
         if f["t"] == "shared", let si = f["si"] {
             // shared
             if let sharedFormula = sheet.shared(formula: si) {
-                guard let f = try? Formula(source:sharedFormula.1, sheet: sheet) else {
+                guard let f = try? Formula(source:sharedFormula.1, sheet: sheet, address: address) else {
                     return nil
                 }
                 let delta = sharedFormula.0.delta(to: self.address)
                 return f.offset(by: delta)
             }
         }
-        return try? Formula(source: f.asString, sheet: sheet)
+        return try? Formula(source: f.asString, sheet: sheet, address: address)
     }
     
     var comment: Comment? {
