@@ -120,17 +120,33 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
         try printSheet("Lineups", bottomRight: Address(row: 84, column: "AZ"))
     }
     
-    func roundTripBlankFile(_ file: StatsBookFile, _ sheetName: String) throws {
+    func roundTripBlankFileXML(_ file: StatsBookFile, _ sheetName: String) throws {
         let sheet = try file.sheet(named: sheetName)
         try sheet.recalc(reset: true)
         let saved = sheet.save()
         XCTAssertEqual(sheet.xml, saved)
     }
     
-    func testSaveBlank() throws {
+    func testSaveBlankXML() throws {
         let file = try loadBlankFile()
-        try roundTripBlankFile(file, "IGRF")
-        try roundTripBlankFile(file, "Score")
+        try roundTripBlankFileXML(file, "IGRF")
+        try roundTripBlankFileXML(file, "Score")
+    }
+    
+    func testSaveUnchanged() throws {
+        let file = try loadBlankFile()
+        let baseData : Data = file.zipFile.originalData
+        let newData = file.zipFile.save()
+        XCTAssertEqual(baseData, newData)
+        if newData != baseData {
+            if newData.count == baseData.count {
+                for i in 0..<newData.count {
+                    if newData[i] != baseData[i] {
+                        XCTFail("Offset \(i) newData = \(newData[i]) oldData = \(baseData[i])")
+                    }
+                }
+            }
+        }
     }
 
 }

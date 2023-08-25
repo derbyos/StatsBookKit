@@ -50,20 +50,74 @@ struct GeneralPurposeFlag : OptionSet {
     static let UTF8 = GeneralPurposeFlag(rawValue:1 << 11)
 }
 
+extension CentralFileHeader {
+    var generalPurposeFlags: GeneralPurposeFlag {
+        get {
+            .init(rawValue:CFSwapInt16LittleToHost(generalFlags))
+        }
+        set {
+            generalFlags = CFSwapInt16HostToLittle(newValue.rawValue)
+        }
+    }
+    var compressionMethod: CompressionMethod? {
+        get {
+            .init(rawValue: Int(CFSwapInt16LittleToHost(compression)))
+        }
+        set {
+            if let newValue {
+                compression = CFSwapInt16HostToLittle(UInt16(newValue.rawValue))
+            }
+        }
+    }
+}
+extension LocalFileHeader {
+    var generalPurposeFlags: GeneralPurposeFlag {
+        get {
+            .init(rawValue:CFSwapInt16LittleToHost(generalFlags))
+        }
+        set {
+            generalFlags = CFSwapInt16HostToLittle(newValue.rawValue)
+        }
+    }
+    var compressionMethod: CompressionMethod? {
+        get {
+            .init(rawValue: Int(CFSwapInt16LittleToHost(compression)))
+        }
+        set {
+            if let newValue {
+                compression = CFSwapInt16HostToLittle(UInt16(newValue.rawValue))
+            }
+        }
+    }
+}
+
 public struct ZipReader {
     let data: Data
+    public var originalData: Data { data }
     var entries: [String: Entry]
     struct Entry {
         /// full name
         var name: String
-        /// range in original data
+        /// range in original data of the entire header+extras+data+data descriptor
         var range: Range<Int>
+        /// The range of payload
+        var payloadRange: Range<Int>
         /// if we've modified it, this is the modified compressed data
         var modified: Data?
         /// the original local file header
         var localHeader: LocalFileHeader
         /// the original central file header
         var header: CentralFileHeader
+        /// additional data store in local header and central record
+        var extraField: Data?
+        /// additional data stored in central record
+        var fileComment: Data?
+        /// do we have a data descriptor?
+        var dataDescriptor: DataDescriptor?
+        /// derived
+        var fileNameData: Data {
+            self.name.data(using: .utf8) ?? Data()
+        }
     }
     /// The name of the file entires in order
     public var entryNames: [String] = []
@@ -73,7 +127,7 @@ public struct ZipReader {
         entries = [:]
         let sig : UInt32 = CFSwapInt32HostToLittle(Signatures.CentralFileHeaderSig.rawValue)
         let endSig : UInt32 = CFSwapInt32HostToLittle(Signatures.EndOfCentralDirSig.rawValue)
-        data.withUnsafeBytes { buffer in
+        data.withUnsafeBytes { (buffer:UnsafeRawBufferPointer) in
             let start = buffer.baseAddress!
             let end = start + data.count
             var t = start
@@ -110,23 +164,52 @@ public struct ZipReader {
                 if CFSwapInt32LittleToHost(localHeader.localFileHeaderSig) != Signatures.LocalFileHeaderSig.rawValue {
                     continue
                 }
+                // this is after the central header
                 let afterHeader = t + MemoryLayout<CentralFileHeader>.stride
+                // this is the name from the central header
                 let nameBuffer = afterHeader.bindMemory(to: UInt8.self, capacity: Int(header.fileNameLength))
                 let nameData = Data(buffer: UnsafeBufferPointer<UInt8>(start: nameBuffer, count: Int(header.fileNameLength)))
-                let encoding =  GeneralPurposeFlag(rawValue:CFSwapInt16LittleToHost(header.generalFlags)).contains(.UTF8) ? String.Encoding.utf8 : String.Encoding.isoLatin1
+                let encoding = header.generalPurposeFlags.contains(.UTF8) ? String.Encoding.utf8 : String.Encoding.isoLatin1
                 guard let fileName = String(data: nameData, encoding: encoding) else {
                     continue
                 }
                 if Int32(CFSwapInt32LittleToHost(header.compressedSize)) < 0 {
                     fatalError("\(fileName) has compressed size header \(header)")
                 }
+                
+                let chunkStart = localOffset
+                let filenameStart = localOffset + MemoryLayout<LocalFileHeader>.size
+                let extraFieldStart = filenameStart + Int(CFSwapInt16LittleToHost(localHeader.fileNameLength))
+                let payloadStart = extraFieldStart + Int(CFSwapInt16LittleToHost(localHeader.extraFieldLength))
+                let payloadEnd = payloadStart + Int(CFSwapInt32LittleToHost(header.compressedSize))
+                let chunkEnd = payloadEnd + (localHeader.generalPurposeFlags.contains(.HasDataDescriptor) ? MemoryLayout<DataDescriptor>.size : 0)
+                /*
+                let totalRange = localOffset ..< localOffset +
+                Int(CFSwapInt32LittleToHost(header.compressedSize) + CFSwapInt32LittleToHost(localHeader.fileNameLength) + CFSwapInt32LittleToHost(localHeader.extraFieldLength) + (localHeader.generalPurposeFlags.contains(.HasDataDescriptor) ? MemoryLayout<DataDescriptor>.size : 0)))
+                 */
+                let dataDescriptor: DataDescriptor?
+                if localHeader.generalPurposeFlags.contains(.HasDataDescriptor) {
+                    dataDescriptor = (start + UnsafeRawPointer.Stride(payloadEnd)).bindMemory(to: DataDescriptor.self, capacity: 1).pointee
+                } else {
+                    dataDescriptor = nil
+                }
+                let extraField: Data?
+                if localHeader.extraFieldLength != 0 {
+                    extraField = data[extraFieldStart ..< payloadStart]
+                } else {
+                    extraField = nil
+                }
                 let entry = Entry(name: fileName,
-                                  range: localOffset ..< localOffset + Int(CFSwapInt32LittleToHost(header.compressedSize)),
+                                  range: chunkStart ..< chunkEnd,
+                                  payloadRange: payloadStart ..< payloadEnd,
                                   localHeader: localHeader,
-                                  header: header
+                                  header: header,
+                                  extraField: extraField,
+                    dataDescriptor: dataDescriptor
                                   )
                 entries[fileName] = entry
                 entryNames.append(fileName)
+                // move to next central file header
                 t += MemoryLayout<CentralFileHeader>.stride +
                     Int(CFSwapInt16LittleToHost(header.fileNameLength)) +
                     Int(CFSwapInt16LittleToHost(header.extraFieldLength)) +
@@ -144,10 +227,11 @@ public struct ZipReader {
         guard let entry = entries[path] else {
             throw Errors.noSuchFile(path)
         }
-        let range = entry.range
+        let range = entry.payloadRange
         if range.isEmpty {
             return Data()
         }
+        #if nomore
         var retval: Data = Data()
         try data.withUnsafeBytes { buffer in
             if range.count == 0 {
@@ -158,7 +242,7 @@ public struct ZipReader {
             let header = t.bindMemory(to: LocalFileHeader.self, capacity: 1).pointee
             var dataDescriptor: DataDescriptor = .init(crc32: header.crc32, compressedSize: header.compressedSize, unCompressedSize: header.unCompressedSize)
             let dataStart = t + MemoryLayout<LocalFileHeader>.stride + Int(CFSwapInt16LittleToHost(header.fileNameLength)) + Int(CFSwapInt16LittleToHost(header.extraFieldLength))
-            if GeneralPurposeFlag(rawValue: header.generalFlags).contains(.HasDataDescriptor) {
+            if header.generalPurposeFlags.contains(.HasDataDescriptor) {
                 // data descriptor is after the data
                 let t2 = dataStart + range.count + 4 // 4 being the size of the end signature
                 dataDescriptor = t2.bindMemory(to: DataDescriptor.self, capacity: 1).pointee
@@ -180,30 +264,150 @@ public struct ZipReader {
             }
         }
         return retval
+        #else
+        if entry.payloadRange.isEmpty {
+            return Data()
+        }
+        let compressedData = data[entry.payloadRange]
+        switch entry.localHeader.compressionMethod {
+        case .None:
+            return compressedData
+        case .Deflated:
+            return ZipReader.gZipDecompress(compressedData, size: Int(CFSwapInt32LittleToHost(entry.header.unCompressedSize)))
+        case .none:
+            throw Errors.unknownCompressionMethod(Int(CFSwapInt16LittleToHost(entry.localHeader.compression)))
+        default:
+            throw Errors.unsupportedCompressionMethod(entry.localHeader.compressionMethod!)
+        }
+        #endif
     }
     
-    
-    public func replace(_ data: Data, for path: String) throws {
-        guard let range = entries[path] else {
+    public func save() -> Data {
+        let sortedEntries = entries.values.sorted { e1, e2 in
+            e1.range.lowerBound < e2.range.lowerBound
+        }
+        
+        var retval = Data()
+        /// write out each
+        var localHeaderRelativeOffsets:[String: Int] = [:]
+        for entry in sortedEntries {
+            // save the updated local header relative offset
+            localHeaderRelativeOffsets[entry.name] = retval.count
+            // first write out a header, extra header data
+            var header = entry.localHeader
+            // do we want to pull the data descriptor?
+            retval.append(Data(bytes: &header, count: MemoryLayout<LocalFileHeader>.stride))
+            retval.append(entry.fileNameData)
+            if let extra = entry.extraField {
+                assert(extra.count == Int(header.extraFieldLength))
+                retval.append(extra)
+            } else {
+                assert(header.extraFieldLength == 0)
+            }
+            // then the compressed file
+            if let modified = entry.modified {
+                // this is already compressed
+                retval.append(modified)
+            } else {
+                retval.append(data[entry.payloadRange])
+            }
+            // then the data descriptor (if any)
+            if var dataDescriptor = entry.dataDescriptor {
+                retval.append(Data(bytes: &dataDescriptor, count: MemoryLayout<DataDescriptor>.stride))
+            }
+        }
+        let startOfCentralHeader = retval.count
+        for entry in sortedEntries {
+            // now write the central header for each item
+            var header = entry.header
+            header.localHeaderRelativeOffset = Int32(localHeaderRelativeOffsets[entry.name]!)
+            retval.append(Data(bytes: &header, count: MemoryLayout<CentralFileHeader>.stride))
+            // after the central header comes the file name, extraField (if any) and comment (if any)
+            retval.append(entry.fileNameData)
+            // the "extraFieldLength" in the central header isn't
+            // the same as the extraFieldLength in the local header
+//            if let extra = entry.extraField {
+//                assert(extra.count == Int(entry.localHeader.extraFieldLength))
+//                retval.append(extra)
+//            } else {
+                assert(header.extraFieldLength == 0)
+//            }
+            if let comment = entry.fileComment {
+                assert(comment.count == Int(header.fileCommentLength))
+                retval.append(comment)
+            } else {
+                assert(header.fileCommentLength == 0)
+            }
+        }
+        // finally, write the EOCD
+        var eocd = EndCentralFileHeader(
+            endCentralFileHeaderSig: Signatures.EndOfCentralDirSig.rawValue,
+            diskNumber: 0,
+            diskNumberWithStartCentral: 0,
+            numberEntriesThisDisk: UInt16(sortedEntries.count),
+            numberEntries: UInt16(sortedEntries.count),
+            centralFileHeaderSize: UInt32(retval.count - startOfCentralHeader),
+            offsetCentralFileHeader: UInt32(startOfCentralHeader),
+            zipFileCommentLength: 0)
+        retval.append(Data(bytes: &eocd, count: MemoryLayout<EndCentralFileHeader>.stride))
+
+        return retval
+    }
+    public mutating func replace(_ data: Data, for path: String) throws {
+        guard var entry = entries[path] else {
             throw Errors.noSuchFile(path)
         }
+        // compress the data
+        let compressed = ZipReader.gZipCompress(data)
+        if compressed.count > data.count {
+            // got bigger, use uncompressed
+            entry.modified = data
+            entry.localHeader.compression = UInt16(CompressionMethod.None.rawValue)
+            entry.localHeader.compressedSize = UInt32(data.count)
+            entry.localHeader.unCompressedSize = UInt32(data.count)
+        } else {
+            entry.modified = compressed
+            entry.localHeader.compression = UInt16(CompressionMethod.Deflated.rawValue)
+            entry.localHeader.compressedSize = UInt32(data.count)
+            entry.localHeader.unCompressedSize = UInt32(data.count)
+        }
+        // remove the HasDataDescriptor (since we know how big it is, etc...)
+        entry.localHeader.generalPurposeFlags.remove(.HasDataDescriptor)
+        entry.header.generalPurposeFlags.remove(.HasDataDescriptor)
+        entry.dataDescriptor = nil
+
+        entry.header.compression = entry.localHeader.compression
+        entry.header.compressedSize = entry.localHeader.compressedSize
+        entry.header.unCompressedSize = entry.localHeader.unCompressedSize
+        entry.header.generalFlags = entry.localHeader.generalFlags
+        // and update ourselves
+        entries[path] = entry
     }
     static func gZipDecompress(_ data: Data, size: Int) -> Data {
         let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: size)
-        let result = data.subdata(in: 0 ..< data.count).withUnsafeBytes ({
-//            if #available(macOS 10.11,iOS 9.0, *) {
-                let read = compression_decode_buffer(buffer, size, $0.baseAddress!.bindMemory(to: UInt8.self, capacity: 1),
-                                                     data.count, nil, COMPRESSION_ZLIB)
-                return Data(bytes: buffer, count:read)
-//            } else {
-//                // Fallback on earlier versions
-//                fatalError()
-//            }
-        }) as Data
+        let result = data.withUnsafeBytes {
+            let read = compression_decode_buffer(buffer, size, $0.baseAddress!.bindMemory(to: UInt8.self, capacity: 1),
+                                                 data.count, nil, COMPRESSION_ZLIB)
+            return Data(bytes: buffer, count:read)
+        }
         buffer.deallocate()
         return result
     }
 
+    static func gZipCompress(_ data: Data) -> Data {
+        let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: data.count * 2)
+        let result = data.subdata(in: 0 ..< data.count).withUnsafeBytes ({
+            //            if #available(macOS 10.11,iOS 9.0, *) {
+            let written = compression_encode_buffer(buffer, data.count * 2, $0.baseAddress!.bindMemory(to: UInt8.self, capacity: 1), data.count, nil, COMPRESSION_ZLIB)
+            return Data(bytes: buffer, count:written)
+            //            } else {
+            //                // Fallback on earlier versions
+            //                fatalError()
+            //            }
+        }) as Data
+        buffer.deallocate()
+        return result
+    }
 }
 
 extension Data {
