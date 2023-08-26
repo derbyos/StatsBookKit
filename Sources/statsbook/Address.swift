@@ -98,3 +98,13 @@ public struct Address : Equatable, Hashable, CustomStringConvertible {
               column: anchorColumn ? column : Address.columnName(columnNumber + by.dc), anchorColumn:  anchorColumn)
     }
 }
+
+extension Address : ExpressibleByStringLiteral {
+    public init(stringLiteral value: String) {
+        if let value = Address(value) {
+            self = value
+        } else {
+            fatalError("Invalid constant address for \(value)")
+        }
+    }
+}

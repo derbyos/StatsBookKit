@@ -9,18 +9,39 @@ import Foundation
 
 
 /// A wrapper around the IGRF
-public struct IGRF {
+public struct IGRF : DynamicSheetPage {
     var sheet: Sheet
     
     init(sheet: Sheet) {
         self.sheet = sheet
+//        _venueName = .init(sheet: sheet, row: 3, col: "B")
     }
-}
 
-public extension IGRF {
-    var venueName: String? {
-        sheet[row: 3, col: "B"]?.stringValue
-    }
+    static var stringFields: [String : Address] = [
+        "venueName":"B3",
+        "city":"I3",
+        "state":"K3",
+        "gameNumber":"L3",
+        "tournament":"B5",
+        "hostLeague":"I5",
+        "date":"B7",
+        "time":"I7",
+    ]
+    
+    static var numberFields: [String: Address] = [
+        :
+    ]
+    /*
+    @StringCell var venueName: String?
+    
+//    var venueName: String? {
+//        get {
+//            try? sheet[row: 3, col: "B"]?.eval()?.asString
+//        }
+//        set {
+//            sheet[row: 3, col: "B"]?.value = newValue.map{.string($0)}
+//        }
+//    }
     var city: String? {
         sheet[row: 3, col: "I"]?.stringValue
     }
@@ -42,59 +63,55 @@ public extension IGRF {
     var time: String? {
         sheet[row: 7, col: "I"]?.stringValue
     }
+     */
 
-    struct Team {
-        var baseAddr: Address
+    struct Team : DynamicSheetPage {
+        var cellOffset: (dr: Int, dc: Int)
         var sheet: Sheet
-        init(sheet: Sheet, baseCol: String) {
+        init(sheet: Sheet, offset: (dr: Int, dc: Int)) {
             self.sheet = sheet
-            self.baseAddr = .init(row: 10, column: baseCol)
+            self.cellOffset = offset
         }
         
-        var league: String? {
-            sheet[baseAddr]?.stringValue
-        }
-        var team: String? {
-            sheet[baseAddr.adding(row: 1)]?.stringValue
-        }
-        var color: String? {
-            sheet[baseAddr.adding(row: 1)]?.stringValue
-        }
-        
-        struct Skater {
-            var number: String?
-            var name: String?
+        static var stringFields: [String : Address] = [
+            "league": "B10",
+            "team": "B11",
+            "color": "B12",
+        ]
+        static var numberFields: [String: Address] = [
+            "period1Points": "C36",
+            "period2Points": "C37",
+            "totalPoints": "C38",
+            "period1Penalties": "F36",
+            "period2Penalties": "F37",
+            "totalPenalties": "F38",
+        ]
+        struct Skater : DynamicSheetPage {
+            var cellOffset: (dr: Int, dc: Int)
+            var sheet: Sheet
+            init(sheet: Sheet, offset: (dr: Int, dc: Int)) {
+                self.sheet = sheet
+                self.cellOffset = offset
+            }
+            static var stringFields: [String : Address] = [
+                "number": "B14",
+                "name": "C14",
+                ]
+            static var numberFields: [String: Address] = [
+                :
+            ]
         }
         func skater(index: Int) -> Skater {
-            .init(
-                number: sheet[baseAddr.adding(row: 4 + index)]?.stringValue,
-                name: sheet[baseAddr.adding(row: 4 + index).adding(column: 1)]?.stringValue
-            )
-        }
-        var period1Points: Int? {
-            sheet[baseAddr.adding(row: 16).adding(column: 1)]?.intValue
-        }
-        var period2Points: Int? {
-            sheet[baseAddr.adding(row: 17).adding(column: 1)]?.intValue
-        }
-        var totalPoints: Int? {
-            sheet[baseAddr.adding(row: 18).adding(column: 1)]?.intValue
-        }
-        var period1Penalties: Int? {
-            sheet[baseAddr.adding(row: 16).adding(column: 3)]?.intValue
-        }
-        var period2Penalties: Int? {
-            sheet[baseAddr.adding(row: 17).adding(column: 3)]?.intValue
-        }
-        var totalPenalties: Int? {
-            sheet[baseAddr.adding(row: 18).adding(column: 3)]?.intValue
+            // form a skater based on offset adding the index
+            .init(sheet: sheet, offset: (dr: self.cellOffset.dr + index - 1, dc: self.cellOffset.dc))
         }
     }
     var home: Team {
-        .init(sheet: sheet, baseCol: "B")
+        .init(sheet: sheet, offset: (dr: 0, dc: 0))
     }
     var away: Team {
-        .init(sheet: sheet, baseCol: "I")
+        // move 6 columns to the right
+        .init(sheet: sheet, offset: (dr: 0, dc: 6))
     }
 }
 

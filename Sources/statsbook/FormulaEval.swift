@@ -385,31 +385,36 @@ extension Cell {
     /// The current embedded value in the XML, potentially including shared strings, etc...
     /// but not calculated or cached in the sheet
     var value: Value? {
-        switch xml["t"] {
-        case "s":
-            guard let sharedID = xml.firstChild(named: "v")?.asInt else {
+        get {
+            switch xml["t"] {
+            case "s":
+                guard let sharedID = xml.firstChild(named: "v")?.asInt else {
+                    return nil
+                }
+                return sheet.file[sharedString: sharedID].map{.string($0)}
+            case "str": // more accurately, cell containing formula
+                return xml.firstChild(named: "v").map{.string($0.asString)}
+            case "inlinestr":
+                return xml.firstChild(named: "v").map{.string($0.asString)}
+                //        case "b": // boolean
+                //            return xml.firstChild(named: "v").map{.string($0.asString)}
+                //        case "d": // date
+                //            return xml.firstChild(named: "v").map{.string($0.asString)}
+            case "n":
+                return xml.firstChild(named: "v").flatMap{Double($0.asString)}.map{.number($0)}
+            default:
+                // for untyped results from formulas
+                if let v = xml.firstChild(named: "v") {
+                    if let d = Double(v.asString) {
+                        return .number(d)
+                    }
+                    return .string(v.asString)
+                }
                 return nil
             }
-            return sheet.file[sharedString: sharedID].map{.string($0)}
-        case "str": // more accurately, cell containing formula
-            return xml.firstChild(named: "v").map{.string($0.asString)}
-        case "inlinestr":
-            return xml.firstChild(named: "v").map{.string($0.asString)}
-//        case "b": // boolean
-//            return xml.firstChild(named: "v").map{.string($0.asString)}
-//        case "d": // date
-//            return xml.firstChild(named: "v").map{.string($0.asString)}
-        case "n":
-            return xml.firstChild(named: "v").flatMap{Double($0.asString)}.map{.number($0)}
-        default:
-            // for untyped results from formulas
-            if let v = xml.firstChild(named: "v") {
-                if let d = Double(v.asString) {
-                    return .number(d)
-                }
-                return .string(v.asString)
-            }
-            return nil
+        }
+        nonmutating set {
+            sheet.cachedValues[address] = newValue
         }
     }
     
@@ -420,7 +425,7 @@ extension Cell {
         if force { // ignore value, re-calcuate formula
             if let f = formula {
                 let retval = try f.eval()
-                sheet.cachedValues[address] = retval
+                value = retval
                 return retval
             }
         }
@@ -430,7 +435,7 @@ extension Cell {
         } else {
             if let f = formula {
                 let retval = try f.eval()
-                sheet.cachedValues[address] = retval
+                value = retval
                 return retval
             } else {// no value, no formula
                 return nil

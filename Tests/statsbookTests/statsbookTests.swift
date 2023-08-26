@@ -71,6 +71,9 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
         XCTAssertEqual(try formula2.eval(), 43.0)
         let formula3 = sheet[row: 36, col: "F"]!.formula!
         XCTAssertEqual(try formula3.eval(), 10.0)
+        let igrf = IGRF(sheet: sheet)
+        XCTAssertEqual(igrf.home.period1Points, 43.0)
+        XCTAssertEqual(igrf.home.period1Penalties, 10.0)
     }
     
     func testStyles() throws {

@@ -20,17 +20,24 @@ struct Cell {
     
     /// The current string value of a cell (either a constant, or the curent value of a calculated cell)
     var stringValue: String? {
-        switch xml["t"] {
-        case "s": // shared string
-            guard let sharedID = xml.firstChild(named: "v")?.asInt else {
+        get {
+            switch xml["t"] {
+            case "s": // shared string
+                guard let sharedID = xml.firstChild(named: "v")?.asInt else {
+                    return nil
+                }
+                return sheet.file[sharedString: sharedID]
+            case "str": // a calculated cell which is formatted as a string
+                // just get the current value
+                return xml.firstChild(named: "v")?.asString
+            case "inlineStr": // inline string
+                return xml.firstChild(named: "v")?.asString
+            default:
                 return nil
             }
-            return sheet.file[sharedString: sharedID]
-        case "str": // a calculated cell which is formatted as a string
-            // just get the current value
-            return xml.firstChild(named: "v")?.asString
-        default:
-            return nil
+        }
+        set {
+            
         }
     }
 
@@ -85,7 +92,10 @@ struct Cell {
 public struct StringCell {
     public var wrappedValue: String? {
         get {
-            sheet[row: row, col: col]?.stringValue
+            try? sheet[row: row, col: col]?.eval()?.asString
+        }
+        nonmutating set {
+            sheet[row: 3, col: "B"]?.value = newValue.map{.string($0)}
         }
     }
     public var comment: Comment? {

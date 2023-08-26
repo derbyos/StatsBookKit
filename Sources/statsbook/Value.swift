@@ -67,6 +67,14 @@ public enum Value: Equatable {
         case .string: return nil
         }
     }
+    var asString: String? {
+        switch self {
+        case .number(let d): return "\(d)"
+        case .undefined: return ""
+        case .bool(let b): return b ? "true" : "false"
+        case .string(let s): return s
+        }
+    }
     var isTrue: Bool {
         switch self {
         case .bool(let b): return b
