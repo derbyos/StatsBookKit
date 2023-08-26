@@ -170,4 +170,27 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
         XCTAssertEqual(jam?.afterStarPass?.jammer, "622")
         XCTAssertEqual(score.homeP1.jam(number: 6)?.afterStarPass?.trips, [4, 0])
     }
+    func testPenaltySheet() throws {
+        let file = try loadSampleFile()
+        let penalties = file.penalties
+        let home1 = penalties.period1.home
+        XCTAssertEqual(home1.totalPenalties, 10)
+        let skater = home1.skater(number: "24")
+        XCTAssertNotNil(skater)
+        let skaterPenalties = skater!.penalties
+        XCTAssertEqual(skaterPenalties.count, 2)
+        XCTAssertEqual(skaterPenalties[0].jam, 16)
+        XCTAssertEqual(skaterPenalties[0].code, "M")
+        XCTAssertEqual(skaterPenalties[1].jam, 20)
+        XCTAssertEqual(skaterPenalties[1].code, "M")
+        
+        let away2 = penalties.period2.away
+        XCTAssertEqual(away2.totalPenalties, 5)
+        let skater2 = away2.skater(number: "28")
+        XCTAssertNotNil(skater2)
+        let skaterPenalties2 = skater2!.penalties
+        XCTAssertEqual(skaterPenalties2.count, 1)
+        XCTAssertEqual(skaterPenalties2[0].jam, 13)
+        XCTAssertEqual(skaterPenalties2[0].code, "P")
+    }
 }
