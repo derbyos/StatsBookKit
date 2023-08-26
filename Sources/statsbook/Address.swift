@@ -146,3 +146,16 @@ extension Address : ExpressibleByStringLiteral {
         }
     }
 }
+
+extension Address : RawRepresentable {
+    public var rawValue: String {
+        self.description
+    }
+    public init?(rawValue: String) {
+        if let value = Address(rawValue) {
+            self = value
+        } else {
+            return nil
+        }
+    }
+}

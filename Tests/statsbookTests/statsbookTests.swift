@@ -166,6 +166,8 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
         let jam = score.homeP1.jam(number: 6)
         XCTAssertNotNil(jam)
         XCTAssertEqual(jam?.jammer,"1313")
+        XCTAssertEqual(jam?.jamTotal, 0)
+        XCTAssertEqual(jam?.gameTotal, 13)
         XCTAssertNotNil(jam?.afterStarPass)
         XCTAssertEqual(jam?.afterStarPass?.jammer, "622")
         XCTAssertEqual(score.homeP1.jam(number: 6)?.afterStarPass?.trips, [4, 0])
@@ -192,5 +194,25 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
         XCTAssertEqual(skaterPenalties2.count, 1)
         XCTAssertEqual(skaterPenalties2[0].jam, 13)
         XCTAssertEqual(skaterPenalties2[0].code, "P")
+    }
+    
+    func testLineups() throws {
+        let file = try loadSampleFile()
+        let lineups = file.lineups
+        let home1 = lineups.homeP1
+        let h1Jam8 = home1.jam(number: 8)
+        XCTAssertNotNil(h1Jam8)
+        let skaters = h1Jam8!.skaters
+        XCTAssertEqual(skaters[.jammer]?.number, "1300")
+        XCTAssertEqual(skaters[.jammer]?.boxTrips, ["+"])
+        let afterSP = h1Jam8?.afterStarPass
+        XCTAssertNotNil(afterSP)
+        XCTAssertEqual(afterSP?.noPivot, "X")
+        XCTAssertEqual(afterSP?.jammer.number, "622")
+        
+        let away2 = lineups.awayP2
+        let a2Jam19 = away2.jam(number: 19)
+        XCTAssertNotNil(a2Jam19)
+        XCTAssertEqual(a2Jam19?.pivot.number, "28")
     }
 }

@@ -52,7 +52,7 @@ public struct Score {
                 var inj = CellDef<String?>("F4")
                 var ni = CellDef<String?>("G4")
                 // if this is a star pass, this cell will have a string
-                var sp = CellDef<String?>("A1")
+                var sp = CellDef<String?>("A4")
                 // if it is not a star pass this cell will have number
                 var jam = CellDef<Int?>("A4")
                 var trip2 = CellDef<Int?>("H4")
@@ -90,7 +90,7 @@ public struct Score {
             
             /// If this team had a star pass, return the "jam" after the star pass
             var afterStarPass: Jam? {
-                if self[Jam.addressFor.jam.nextRow] == "SP" {
+                if self[self.addressFor.sp.nextRow] == "SP" {
                     // return the next row
                     return .init(sheet: sheet, offset: cellOffset + .init(dr:1))
                 }
