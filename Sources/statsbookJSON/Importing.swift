@@ -13,7 +13,7 @@ extension StatsBookJSON {
         self.igrf = .init(igrf: statsbook.igrf)
         self.score = .init(score: statsbook.score)
         self.penalties = .init(penalties: statsbook.penalties)
-        self.lineups = StatsBookJSON.blank.lineups
+        self.lineups = .init(lineups: statsbook.lineups)
     }
 }
 

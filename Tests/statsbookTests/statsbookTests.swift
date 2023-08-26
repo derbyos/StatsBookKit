@@ -274,8 +274,31 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
     func testImportingJSONPenalties() throws {
         let file = try loadSampleFile()
         let sbj = StatsBookJSON(statsbook: file)
-
+        
         XCTAssertEqual(sbj.penalties.period1.home.totalPenalties, 10)
         XCTAssertEqual(sbj.penalties.period2.away.totalPenalties, 5)
+    }
+    
+    
+    func testImportingJSONLineups() throws {
+        let file = try loadSampleFile()
+        let sbj = StatsBookJSON(statsbook: file)
+
+        XCTAssertEqual(sbj.lineups.homeP1.jam(number: 8)?.jammer?.number, "1300")
+        XCTAssertEqual(sbj.lineups.awayP2.jam(number:16, afterSP: true)?.jammer?.number, "33")
+    }
+    
+    func testRoundTrip() throws {
+        // note that until we have export to xlsx we can't do this test
+        let file = try loadSampleFile()
+        let sbj = StatsBookJSON(statsbook: file)
+        let data = try JSONEncoder().encode(sbj)
+        print(String(data: data, encoding: .utf8)!)
+        // and now import
+        let newFile = try loadBlankFile()
+        // sbj.export(statsbook: newFile)
+        let sbj2 = StatsBookJSON(statsbook: newFile)
+        let data2 = try JSONEncoder().encode(sbj2)
+//        XCTAssertEqual(data, data2)
     }
 }

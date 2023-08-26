@@ -85,6 +85,26 @@ public struct Score: Codable {
         
         public var jams: [Jam]
         
+        /// Get the line that contains that jam
+        public func jam(number: Int, afterSP: Bool = false) -> Jam? {
+            for ji in jams.enumerated() {
+                if ji.element.jam == number {
+                    if afterSP {
+                        if ji.offset < jams.count-1 {
+                            let next = jams[ji.offset + 1]
+                            if next.sp != nil {
+                                return next
+                            }
+                        }
+                        return nil
+                    } else {
+                        return ji.element
+                    }
+                }
+            }
+            return nil
+        }
+
         public struct Totals : Codable {
             public init(jams: Int? = nil, lost: Int? = nil, lead: Int? = nil, call: Int? = nil, inj: Int? = nil, ni: Int? = nil, trip2: Int? = nil, trip3: Int? = nil, trip4: Int? = nil, trip5: Int? = nil, trip6: Int? = nil, trip7: Int? = nil, trip8: Int? = nil, trip9: Int? = nil, trip10: Int? = nil, period: Int? = nil, game: Int? = nil) {
                 _jams = .init(value: jams)
