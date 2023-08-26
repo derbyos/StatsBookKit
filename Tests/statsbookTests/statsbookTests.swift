@@ -39,6 +39,7 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
     func testRead() throws {
         let file = try loadSampleFile()
         let igrf = file.igrf
+        XCTAssertEqual(igrf.city, "Saint Paul")
         XCTAssertEqual(igrf.home.league, "North Star Roller Derby")
         //        print("\(igrf.home.league ?? "")")
     }
@@ -71,9 +72,6 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
         XCTAssertEqual(try formula2.eval(), 43.0)
         let formula3 = sheet[row: 36, col: "F"]!.formula!
         XCTAssertEqual(try formula3.eval(), 10.0)
-        let igrf = IGRF(sheet: sheet)
-        XCTAssertEqual(igrf.home.period1Points, 43.0)
-        XCTAssertEqual(igrf.home.period1Penalties, 10.0)
     }
     
     func testStyles() throws {
@@ -152,4 +150,24 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
         }
     }
 
+    func testIGRF() throws {
+        let file = try loadSampleFile()
+        let sheet = try file.sheet(named: "IGRF")
+        let igrf = IGRF(sheet: sheet)
+        XCTAssertEqual(igrf.city, "Saint Paul")
+        XCTAssertEqual(igrf.home.period1Points, 43.0)
+        XCTAssertEqual(igrf.home.period1Penalties, 10.0)
+    }
+    func testScoreSheet() throws {
+        let file = try loadSampleFile()
+        let score = file.score
+        XCTAssertEqual(score.homeP1.color, "White")
+        XCTAssertEqual(score.awayP2.color, "Red")
+        let jam = score.homeP1.jam(number: 6)
+        XCTAssertNotNil(jam)
+        XCTAssertEqual(jam?.jammer,"1313")
+        XCTAssertNotNil(jam?.afterStarPass)
+        XCTAssertEqual(jam?.afterStarPass?.jammer, "622")
+        XCTAssertEqual(score.homeP1.jam(number: 6)?.afterStarPass?.trips, [4, 0])
+    }
 }

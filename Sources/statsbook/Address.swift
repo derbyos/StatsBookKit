@@ -83,19 +83,57 @@ public struct Address : Equatable, Hashable, CustomStringConvertible {
         .init(row: row, anchorRow: anchorRow, column: Address.columnName(columnNumber + delta), anchorColumn: anchorColumn)
     }
     
+    var nextRow : Address {
+        self.adding(row: 1)
+    }
+    var previousRow : Address {
+        self.adding(row: -1)
+    }
+    /// Offset between cells
+    public struct Offset {
+        public init(dr: Int = 0, dc: Int = 0) {
+            self.dr = dr
+            self.dc = dc
+        }
+        public static var zero = Offset(dr: 0, dc: 0)
+        var dr: Int
+        var dc: Int
+        
+        public static func + (lhs: Offset, rhs: Offset) -> Offset {
+            .init(dr: lhs.dr + rhs.dr, dc: lhs.dc + rhs.dc)
+        }
+    }
     /// What is the offset from here to the other cell
     /// - Parameter other: The other cell
     /// - Returns: Different in rows and columns
-    func delta(to other: Address) -> (dr: Int, dc: Int) {
-        (dr: other.row - row, dc: other.columnNumber - columnNumber)
+    func delta(to other: Address) -> Offset {
+        .init(dr: other.row - row, dc: other.columnNumber - columnNumber)
+    }
+    
+    public static func - (lhs: Address, rhs: Address) -> Offset {
+        rhs.delta(to: lhs)
     }
     /// Offset the address by rows and columns
     /// - Parameter by: The offset
     /// - Returns: The offset address
     /// If the row or column is anchored, it is not offset
-    func offset(by: (dr: Int, dc: Int)) -> Address {
+    func offset(by: Offset) -> Address {
         .init(row: anchorRow ? row : row + by.dr, anchorRow: anchorRow,
               column: anchorColumn ? column : Address.columnName(columnNumber + by.dc), anchorColumn:  anchorColumn)
+    }
+    
+    public static func + (lhs: Address, rhs: Offset) -> Address {
+        lhs.offset(by: rhs)
+    }
+    
+    // TODO: Make AddressRange struct with an iterator
+    /// Support range trivially
+    static func ... (tl: Address, br:Address) -> [Address] {
+        (min(tl.row, br.row) ..< max(tl.row, br.row) + 1).flatMap { row in
+            (min(tl.columnNumber, br.columnNumber) ..< max(tl.columnNumber, br.columnNumber) + 1).map { colNum in
+                Address(row: row, column: Address.columnName(colNum))
+            }
+        }
     }
 }
 

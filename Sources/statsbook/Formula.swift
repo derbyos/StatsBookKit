@@ -80,7 +80,7 @@ extension Formula {
     /// Note that anchored parts do not offset
     /// - Parameter by: The offset in rows and columns
     /// - Returns: The offset formula
-    func offset(by: (dr: Int, dc: Int)) -> Formula {
+    func offset(by: Address.Offset) -> Formula {
         .init(root: root.offset(by: by), sheet: sheet, address: address.offset(by: by))
     }
 }
@@ -90,7 +90,7 @@ extension Formula.Op {
     /// Note that anchored parts do not offset
     /// - Parameter by: The offset in rows and columns
     /// - Returns: The offset formula
-    func offset(by: (dr: Int, dc: Int)) -> Formula.Op {
+    func offset(by: Address.Offset) -> Formula.Op {
         switch self {
         case .binary(let l, let oper, let r):
             return .binary(l.offset(by: by), oper, r.offset(by: by))
