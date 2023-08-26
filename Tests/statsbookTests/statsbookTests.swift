@@ -265,8 +265,17 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
         let sbj = StatsBookJSON(statsbook: file)
         XCTAssertEqual(file.score.homeP1.totals.lead, 7)
         XCTAssertEqual(file.score.awayP2.totals.lead, 14)
-
+        
         XCTAssertEqual(sbj.score.homeP1.totals.lead, 7)
         XCTAssertEqual(sbj.score.awayP2.totals.lead, 14)
+    }
+    
+    
+    func testImportingJSONPenalties() throws {
+        let file = try loadSampleFile()
+        let sbj = StatsBookJSON(statsbook: file)
+
+        XCTAssertEqual(sbj.penalties.period1.home.totalPenalties, 10)
+        XCTAssertEqual(sbj.penalties.period2.away.totalPenalties, 5)
     }
 }

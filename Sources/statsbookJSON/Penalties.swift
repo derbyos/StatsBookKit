@@ -23,15 +23,15 @@ public struct Penalties: Codable {
         @Commented public var penaltyTracker : String?
         
         public struct Team : Codable {
-            public init(totalPenalties: Int? = nil, notSkaterExplusionCount: Int? = nil, skaters: [Penalties.Period.Team.Skater]) {
+            public init(totalPenalties: Int? = nil, nonSkaterExplusionCount: Int? = nil, skaters: [Penalties.Period.Team.Skater]) {
                 _totalPenalties = .init(value:totalPenalties)
-                _notSkaterExplusionCount = .init(value:notSkaterExplusionCount)
+                _nonSkaterExplusionCount = .init(value:nonSkaterExplusionCount)
                 self.skaters = skaters
             }
             
             // derived but handy
             @Commented public var totalPenalties : Int?
-            @Commented public var notSkaterExplusionCount : Int?
+            @Commented public var nonSkaterExplusionCount : Int?
             
             public struct Skater : Codable {
                 public init(number: String? = nil, total: Int? = nil, penalties: [Penalties.Period.Team.Skater.Penalty], foExp: Penalties.Period.Team.Skater.Penalty? = nil) {
@@ -66,4 +66,49 @@ public struct Penalties: Codable {
     }
     public var period1 : Period
     public var period2 : Period
+}
+
+import statsbook
+
+extension Penalties {
+    init(penalties sb: statsbook.Penalties) {
+        period1 = .init(penalties: sb.period1)
+        period2 = .init(penalties: sb.period2)
+    }
+}
+
+extension Penalties.Period {
+    init(penalties sb: statsbook.Penalties.Period) {
+        _penaltyTracker = Importer(tsc: sb).penaltyTracker
+        home = .init(team: sb.home)
+        away = .init(team: sb.away)
+    }
+}
+
+extension Penalties.Period.Team {
+    init(team sb: statsbook.Penalties.Period.Team) {
+        let team = Importer(tsc: sb)
+        _totalPenalties = team.totalPenalties
+        _nonSkaterExplusionCount = team.nonSkaterExplusionCount
+        skaters = sb.skaters().map {
+            .init(skater: $0)
+        }
+    }
+}
+
+extension Penalties.Period.Team.Skater {
+    init(skater sb: statsbook.Penalties.Period.Team.Skater) {
+        let skater = Importer(tsc: sb)
+        _number = skater.number
+        _total = skater.total
+        penalties = sb.penalties.map{ .init(penalty: $0) }
+    }
+}
+
+extension Penalties.Period.Team.Skater.Penalty {
+    init(penalty sb: statsbook.Penalties.Period.Team.Skater.Penalty) {
+        let penalty = Importer(tsc: sb)
+        _jam = penalty.jam
+        _code = penalty.code
+    }
 }

@@ -21,12 +21,12 @@ public struct Penalties {
             self.cellOffset = offset
         }
         public struct CellDefinitions {
-            var homeName = CellDef<String?>("A1")
-            var homeColor = CellDef<String?>("I1")
-            var awayName = CellDef<String?>("Q1")
-            var awayColor = CellDef<String?>("Z1")
-            var date = CellDef<String?>("L1")
-            var penaltyTracker = CellDef<String?>("N1")
+            public var homeName = CellDef<String?>("A1")
+            public var homeColor = CellDef<String?>("I1")
+            public var awayName = CellDef<String?>("Q1")
+            public var awayColor = CellDef<String?>("Z1")
+            public var date = CellDef<String?>("L1")
+            public var penaltyTracker = CellDef<String?>("N1")
         }
         public static var cellDefinitions = CellDefinitions()
         
@@ -39,8 +39,8 @@ public struct Penalties {
             }
             public struct CellDefinitions {
                 /// total penalties for this team in this peariod
-                var totalPenalties = CellDef<Int?>("L44")
-                var notSkaterExplusionCount = CellDef<Int?>("E44")
+                public var totalPenalties = CellDef<Int?>("L44")
+                public var nonSkaterExplusionCount = CellDef<Int?>("E44")
             }
             public static var cellDefinitions = CellDefinitions()
             
@@ -52,9 +52,10 @@ public struct Penalties {
                     self.cellOffset = offset
                 }
                 public struct CellDefinitions {
+                    /// skater number
+                    public var number = CellDef<String?>("A4")
                     /// total penalties for this team in this peariod
-                    var number = CellDef<String?>("A4")
-                    var total = CellDef<Int?>("L4")
+                    public var total = CellDef<Int?>("L4")
                 }
                 public static var cellDefinitions = CellDefinitions()
                 
@@ -66,9 +67,8 @@ public struct Penalties {
                         self.cellOffset = offset
                     }
                     public struct CellDefinitions {
-                        /// total penalties for this team in this peariod
-                        var code = CellDef<String?>("B4")
-                        var jam = CellDef<Int?>("B5")
+                        public var code = CellDef<String?>("B4")
+                        public var jam = CellDef<Int?>("B5")
                     }
                     public static var cellDefinitions = CellDefinitions()
                 }
@@ -93,7 +93,7 @@ public struct Penalties {
             
             /// All skaters, in order.  Note that we assume that skater numbers are entered as
             /// string (which we do in other places as well)
-            func skaters() -> [Skater] {
+            public func skaters() -> [Skater] {
                 (0..<20).compactMap { i in
                     let skater = Skater(sheet: sheet, offset: cellOffset + .init(dr: 2 * i))
                     if skater.number == nil {
