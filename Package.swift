@@ -12,7 +12,7 @@ let package = Package(
         // Products define the executables and libraries a package produces, and make them visible to other packages.
         .library(
             name: "statsbook",
-            targets: ["statsbook"]),
+            targets: ["statsbook","statsbookJSON"]),
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
@@ -26,10 +26,13 @@ let package = Package(
             dependencies: ["gandZip"]),
         .testTarget(
             name: "statsbookTests",
-            dependencies: ["statsbook"]),
+            dependencies: ["statsbook","gandZip","statsbookJSON"]),
         .target(
             name: "gandZip",
             dependencies: ["gandZipHeader"]),
         .target(name: "gandZipHeader"),
+        .target(
+            name: "statsbookJSON",
+            dependencies: ["statsbook"]),
     ]
 )

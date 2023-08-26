@@ -1,5 +1,6 @@
 import XCTest
 @testable import statsbook
+@testable import statsbookJSON
 
 final class statsbookTests: XCTestCase {
     func testExample() throws {
@@ -155,8 +156,8 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
         let sheet = try file.sheet(named: "IGRF")
         let igrf = IGRF(sheet: sheet)
         XCTAssertEqual(igrf.city, "Saint Paul")
-        XCTAssertEqual(igrf.home.period1Points, 43.0)
-        XCTAssertEqual(igrf.home.period1Penalties, 10.0)
+        XCTAssertEqual(igrf.home.period1Points, 43)
+        XCTAssertEqual(igrf.home.period1Penalties, 10)
     }
     func testScoreSheet() throws {
         let file = try loadSampleFile()
@@ -214,5 +215,32 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
         let a2Jam19 = away2.jam(number: 19)
         XCTAssertNotNil(a2Jam19)
         XCTAssertEqual(a2Jam19?.pivot.number, "28")
+    }
+    
+    func testMinJSONComments() throws {
+        var sbj = StatsbookJSON.blank
+        sbj.igrf.city = "Toasterville"
+        sbj.igrf.$city.comment = "Not a real city"
+        sbj.igrf.venueName = "Arena"
+        let data = try JSONEncoder().encode(sbj)
+        print(String(data: data, encoding: .utf8)!)
+        
+        let sbj2 = try JSONDecoder().decode(StatsbookJSON.self, from: data)
+        // make sure both commented and uncommented values are there
+        // and the comment as well
+        XCTAssertEqual(sbj.igrf.city, sbj2.igrf.city)
+        XCTAssertEqual(sbj.igrf.$city.comment, sbj2.igrf.$city.comment)
+        XCTAssertEqual(sbj.igrf.venueName, sbj2.igrf.venueName)
+
+        let encoderNoComment = JSONEncoder()
+        encoderNoComment.userInfo[RemoveCommentsKey] = true
+        let dataNoComment = try encoderNoComment.encode(sbj)
+        print(String(data: dataNoComment, encoding: .utf8)!)
+        let sbjNoComment = try JSONDecoder().decode(StatsbookJSON.self, from: data)
+        // make sure both commented and uncommented values are there
+        // but the comment is removed
+        XCTAssertEqual(sbj.igrf.city, sbjNoComment.igrf.city)
+        XCTAssertEqual(sbj.igrf.venueName, sbjNoComment.igrf.venueName)
+        XCTAssertNil(sbjNoComment.igrf.$city.comment)
     }
 }

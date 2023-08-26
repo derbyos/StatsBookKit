@@ -135,7 +135,7 @@ public struct Score {
                 var trip9 = CellDef<Int?>("O42")
                 var trip10 = CellDef<Int?>("P42")
                 var period = CellDef<Int?>("Q42") // totals for this period
-                var game = CellDef<Double?>("Q42") // totals for the game so far
+                var game = CellDef<Int?>("Q42") // totals for the game so far
             }
             static var cellDefinitions = CellDefinitions()
             /// The trip totals

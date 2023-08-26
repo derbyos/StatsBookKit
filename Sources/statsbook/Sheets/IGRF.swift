@@ -45,12 +45,12 @@ public struct IGRF : TypedSheetCover {
             var league = CellDef<String?>("B10")
             var team = CellDef<String?>("B11")
             var state = CellDef<String?>("B12")
-            var period1Points = CellDef<Double?>("C36")
-            var period2Points = CellDef<Double?>("C37")
-            var totalPoints = CellDef<Double?>("C38")
-            var period1Penalties = CellDef<Double?>("F36")
-            var period2Penalties = CellDef<Double?>("F37")
-            var totalPenalties = CellDef<Double?>("F38")
+            var period1Points = CellDef<Int?>("C36")
+            var period2Points = CellDef<Int?>("C37")
+            var totalPoints = CellDef<Int?>("C38")
+            var period1Penalties = CellDef<Int?>("F36")
+            var period2Penalties = CellDef<Int?>("F37")
+            var totalPenalties = CellDef<Int?>("F38")
         }
         
         static var cellDefinitions: CellDefinitions = .init()
