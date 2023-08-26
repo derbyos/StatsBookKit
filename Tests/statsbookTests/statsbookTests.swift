@@ -18,7 +18,7 @@ final class statsbookTests: XCTestCase {
     
     func testLoading() throws {
         let file = try loadBlankFile()
-        print(file.zipFile.entryNames)
+        print(file.zipFile.entries)
         XCTAssertEqual(try file.sheet(named: "Read Me")[row: 1, col: "A"]?.stringValue, "Women\'s Flat Track Derby Association")
         XCTAssertEqual(file.igrf.sheet[row: 3, col: "L"]?.comment?.commentText, """
 Hint:

@@ -94,7 +94,7 @@ extension LocalFileHeader {
 public struct ZipReader {
     let data: Data
     public var originalData: Data { data }
-    var entries: [String: Entry]
+    var allEntries: [String: Entry]
     struct Entry {
         /// full name
         var name: String
@@ -120,11 +120,11 @@ public struct ZipReader {
         }
     }
     /// The name of the file entires in order
-    public var entryNames: [String] = []
+    public var entries: [String] = []
     
     public init(data: Data) {
         self.data = data
-        entries = [:]
+        allEntries = [:]
         let sig : UInt32 = CFSwapInt32HostToLittle(Signatures.CentralFileHeaderSig.rawValue)
         let endSig : UInt32 = CFSwapInt32HostToLittle(Signatures.EndOfCentralDirSig.rawValue)
         data.withUnsafeBytes { (buffer:UnsafeRawBufferPointer) in
@@ -207,8 +207,8 @@ public struct ZipReader {
                                   extraField: extraField,
                     dataDescriptor: dataDescriptor
                                   )
-                entries[fileName] = entry
-                entryNames.append(fileName)
+                allEntries[fileName] = entry
+                entries.append(fileName)
                 // move to next central file header
                 t += MemoryLayout<CentralFileHeader>.stride +
                     Int(CFSwapInt16LittleToHost(header.fileNameLength)) +
@@ -224,7 +224,7 @@ public struct ZipReader {
         case unknownCompressionMethod(Int)
     }
     public func data(for path: String) throws -> Data {
-        guard let entry = entries[path] else {
+        guard let entry = allEntries[path] else {
             throw Errors.noSuchFile(path)
         }
         let range = entry.payloadRange
@@ -283,7 +283,7 @@ public struct ZipReader {
     }
     
     public func save() -> Data {
-        let sortedEntries = entries.values.sorted { e1, e2 in
+        let sortedEntries = allEntries.values.sorted { e1, e2 in
             e1.range.lowerBound < e2.range.lowerBound
         }
         
@@ -354,7 +354,7 @@ public struct ZipReader {
         return retval
     }
     public mutating func replace(_ data: Data, for path: String) throws {
-        guard var entry = entries[path] else {
+        guard var entry = allEntries[path] else {
             throw Errors.noSuchFile(path)
         }
         // compress the data
@@ -381,7 +381,7 @@ public struct ZipReader {
         entry.header.unCompressedSize = entry.localHeader.unCompressedSize
         entry.header.generalFlags = entry.localHeader.generalFlags
         // and update ourselves
-        entries[path] = entry
+        allEntries[path] = entry
     }
     static func gZipDecompress(_ data: Data, size: Int) -> Data {
         let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: size)
@@ -431,49 +431,3 @@ extension Data {
         }
     }
 }
-/*
-public struct ZipWriter {
-    var data: Data
-//    public var entries: [String: Range<Int>]
-    public init() {
-        data = Data()
-        entries = [:]
-    }
-    public var entries: [String: (LocalFileHeader,Range<Int>)]
-    public mutating func add(data contents: Data, path: String) {
-        let compressed = ZipWriter.gZipCompress(contents)
-        let fileName = path.data(using: .utf8)!
-        var localFileHeader = LocalFileHeader(localFileHeaderSig: Signatures.LocalFileHeaderSig.rawValue, extractVersion: 0, generalFlags: 0, compression: UInt16(compressed.0.rawValue), lastModTime: 0, lastModDate: 0, crc32: data.crc32, compressedSize: UInt32(compressed.1.count), unCompressedSize: UInt32(contents.count), fileNameLength: UInt16(fileName.count), extraFieldLength: 0)
-        let start = data.count
-        data.append(Data(bytes: &localFileHeader, count: MemoryLayout<LocalFileHeader>.stride))
-        data.append(fileName)
-        data.append(compressed.1)
-        entries[path] = (localFileHeader, start ..< data.count)
-    }
-    public mutating func finish() -> Data {
-        let startCentralFileHeader = data.count
-        var cfh = CentralFileHeader(centralFileHeaderSig: Signatures.CentralFileHeaderSig.rawValue, creatorVersion: 0, extractVersion: 0, generalFlags: 0, compression: <#T##UInt16#>, lastModTime: <#T##UInt16#>, lastModDate: <#T##UInt16#>, crc32: <#T##UInt32#>, compressedSize: <#T##UInt32#>, unCompressedSize: <#T##UInt32#>, fileNameLength: <#T##UInt16#>, extraFieldLength: <#T##UInt16#>, fileCommentLength: <#T##UInt16#>, diskNumberStart: <#T##UInt16#>, interalFileAttrs: <#T##UInt16#>, externalFileAttrs: <#T##UInt32#>, localHeaderRelativeOffset: <#T##Int32#>)
-        var ecfh = EndCentralFileHeader(endCentralFileHeaderSig: Signatures.EndOfCentralDirSig.rawValue, diskNumber: 0, diskNumberWithStartCentral: 0, numberEntriesThisDisk: UInt16(entries.count), numberEntries: UInt16(entries.count), centralFileHeaderSize: <#T##UInt32#>, offsetCentralFileHeader: UInt32(startCentralFileHeader), zipFileCommentLength: 0)
-        data.append(Data(bytes: &cfh, count: MemoryLayout<CentralFileHeader>.stride))
-        data.append(Data(bytes: &ecfh, count: MemoryLayout<EndCentralFileHeader>.stride))
-        return data
-    }
-    static func gZipCompress(_ data: Data) -> (CompressionMethod,Data) {
-        return data.withUnsafeBytes { unsafeData in
-            let bytesPointer = UnsafeMutableRawPointer.allocate(
-                byteCount: data.count,
-                    alignment: MemoryLayout<Int8>.alignment)
-            defer {
-                bytesPointer.deallocate()
-            }
-            let compressedSize = compression_encode_buffer(bytesPointer.bindMemory(to: UInt8.self, capacity: data.count), data.count, unsafeData.baseAddress!.bindMemory(to: UInt8.self, capacity: data.count), data.count, nil, COMPRESSION_ZLIB)
-            if compressedSize != 0 {
-                let compressedData = Data(bytes: bytesPointer, count: data.count)
-                return (.Deflated, compressedData)
-            } else {
-                return (.None, data)
-            }
-        }
-    }
-}
-*/
