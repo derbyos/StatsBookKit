@@ -20,19 +20,19 @@ public struct Lineups {
 
     /// All the data for a given team's period
     public struct TeamPeriod : TypedSheetCover {
-        var sheet: Sheet
-        var cellOffset: Address.Offset
+        public var sheet: Sheet
+        public var cellOffset: Address.Offset
         init(sheet: Sheet, offset: Address.Offset) {
             self.sheet = sheet
             self.cellOffset = offset
         }
-        struct CellDefinitions {
+        public struct CellDefinitions {
             var team = CellDef<String?>("A1")
             var color = CellDef<String?>("H1")
             var lineupTracker = CellDef<String?>("P1")
             var date = CellDef<Double?>("L1")
         }
-        static var cellDefinitions: CellDefinitions = .init()
+        public static var cellDefinitions: CellDefinitions = .init()
 
         /// all the data for a single row in the team period (which can be before
         /// or after a star pass)

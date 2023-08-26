@@ -10,9 +10,9 @@ import Foundation
 
 /// A simple typed wrapper around an address.  We'd like to make this a property wrapper
 /// but that confuses the keypath subscript
-struct CellDef<T> {
-    var address: Address
-    init(_ address: Address) {
+public struct CellDef<T> {
+    public var address: Address
+    public init(_ address: Address) {
         self.address = address
     }
 }
@@ -20,7 +20,7 @@ struct CellDef<T> {
 /// For any wrapper around a sheet (or an areas in a sheet), we provide a way to do a dynamic lookup
 /// of various things
 @dynamicMemberLookup
-protocol TypedSheetCover {
+public protocol TypedSheetCover {
     var sheet: Sheet { get }
     /// Where all the cell definitions are stored
     associatedtype CellDefinitions
@@ -37,9 +37,9 @@ protocol TypedSheetCover {
 
 // default implementations of the various parts of the field
 extension TypedSheetCover {
-    var cellOffset: Address.Offset { .zero }
+    public var cellOffset: Address.Offset { .zero }
     // support for strings by default
-    subscript(dynamicMember path: KeyPath<CellDefinitions, CellDef<String?>>) -> String? {
+    public subscript(dynamicMember path: KeyPath<CellDefinitions, CellDef<String?>>) -> String? {
         get {
             return self[Self.cellDefinitions[keyPath: path].address]
         }
@@ -48,7 +48,7 @@ extension TypedSheetCover {
         }
     }
     // support for numbers by default
-    subscript(dynamicMember path: KeyPath<CellDefinitions, CellDef<Double?>>) -> Double? {
+    public subscript(dynamicMember path: KeyPath<CellDefinitions, CellDef<Double?>>) -> Double? {
         get {
             return self[Self.cellDefinitions[keyPath: path].address]
         }
@@ -57,7 +57,7 @@ extension TypedSheetCover {
         }
     }
     // support for ints by default (type converting doubles)
-    subscript(dynamicMember path: KeyPath<CellDefinitions, CellDef<Int?>>) -> Int? {
+    public subscript(dynamicMember path: KeyPath<CellDefinitions, CellDef<Int?>>) -> Int? {
         get {
             if let d: Double = self[Self.cellDefinitions[keyPath: path].address] {
                 return Int(d)
@@ -68,16 +68,16 @@ extension TypedSheetCover {
             self[Self.cellDefinitions[keyPath: path].address] = newValue.map{Double($0)}
         }
     }
-
-    subscript<T>(dynamicMember path: KeyPath<CellDefinitions, CellDef<T>>) -> T {
+    
+    public subscript<T>(dynamicMember path: KeyPath<CellDefinitions, CellDef<T>>) -> T {
         get {
-            fatalError("Unsupported type in dynamic sheet page")
+            fatalError("Unsupported type in dynamic sheet page: \(String(describing: T.self))")
         }
         set {
             fatalError("Unsupported type in dynamic sheet page")
         }
     }
-
+    
     
     subscript(address: Address) -> String? {
         get {
@@ -113,6 +113,11 @@ extension TypedSheetCover {
     static var addressFor: AddressFetcher<Self> {
         .init()
     }
+    
+    /// Get a transformer that allows access to comments
+    public var commentFor: CommentFetcher<Self> {
+        .init(sheet: sheet, cellOffset: cellOffset)
+    }
 }
 
 // A way to get the address for a given field in a TypedSheetCover
@@ -122,5 +127,21 @@ extension TypedSheetCover {
 struct AddressFetcher<T: TypedSheetCover> {
     subscript<T2>(dynamicMember path: KeyPath<T.CellDefinitions, CellDef<T2>>) -> Address {
         return T.cellDefinitions[keyPath: path].address
+    }
+}
+
+
+
+// A way to get the comment for a given field in a TypedSheetCover
+// This assume that the dynamic member is valid (or errors)
+@dynamicMemberLookup
+public struct CommentFetcher<T: TypedSheetCover> {
+    var sheet: Sheet
+    var cellOffset: Address.Offset
+    public subscript<T2>(dynamicMember path: KeyPath<T.CellDefinitions, CellDef<T2>>) -> Comment? {
+        guard let xml = sheet.comment(for: T.cellDefinitions[keyPath: path].address + cellOffset) else {
+            return nil
+        }
+        return Comment(xml: xml, sheet: sheet)
     }
 }

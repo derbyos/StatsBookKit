@@ -7,7 +7,7 @@ final class statsbookTests: XCTestCase {
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct
         // results.
-        XCTAssertEqual(statsbook().text, "Hello, World!")
+        //        XCTAssertEqual(statsbook().text, "Hello, World!")
     }
     
     func loadBlankFile() throws -> StatsBookFile {
@@ -150,14 +150,14 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
             }
         }
     }
-
+    
     func testIGRF() throws {
         let file = try loadSampleFile()
         let sheet = try file.sheet(named: "IGRF")
         let igrf = IGRF(sheet: sheet)
         XCTAssertEqual(igrf.city, "Saint Paul")
-        XCTAssertEqual(igrf.home.period1Points, 43)
-        XCTAssertEqual(igrf.home.period1Penalties, 10)
+        XCTAssertEqual(igrf.homePoints.period1, 43)
+        XCTAssertEqual(igrf.homePenalties.period1, 10)
     }
     func testScoreSheet() throws {
         let file = try loadSampleFile()
@@ -218,29 +218,45 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
     }
     
     func testMinJSONComments() throws {
-        var sbj = StatsbookJSON.blank
+        var sbj = StatsBookJSON.blank
         sbj.igrf.city = "Toasterville"
         sbj.igrf.$city.comment = "Not a real city"
         sbj.igrf.venueName = "Arena"
         let data = try JSONEncoder().encode(sbj)
         print(String(data: data, encoding: .utf8)!)
         
-        let sbj2 = try JSONDecoder().decode(StatsbookJSON.self, from: data)
+        let sbj2 = try JSONDecoder().decode(StatsBookJSON.self, from: data)
         // make sure both commented and uncommented values are there
         // and the comment as well
         XCTAssertEqual(sbj.igrf.city, sbj2.igrf.city)
         XCTAssertEqual(sbj.igrf.$city.comment, sbj2.igrf.$city.comment)
         XCTAssertEqual(sbj.igrf.venueName, sbj2.igrf.venueName)
-
+        
         let encoderNoComment = JSONEncoder()
         encoderNoComment.userInfo[RemoveCommentsKey] = true
         let dataNoComment = try encoderNoComment.encode(sbj)
         print(String(data: dataNoComment, encoding: .utf8)!)
-        let sbjNoComment = try JSONDecoder().decode(StatsbookJSON.self, from: data)
+        let sbjNoComment = try JSONDecoder().decode(StatsBookJSON.self, from: dataNoComment)
         // make sure both commented and uncommented values are there
         // but the comment is removed
         XCTAssertEqual(sbj.igrf.city, sbjNoComment.igrf.city)
         XCTAssertEqual(sbj.igrf.venueName, sbjNoComment.igrf.venueName)
         XCTAssertNil(sbjNoComment.igrf.$city.comment)
+    }
+    
+    func testImportingJSONComments() throws {
+        let file = try loadSampleFile()
+        let sbj = StatsBookJSON(statsbook: file)
+        XCTAssertNotNil(sbj.igrf.$gameNumber.comment)
+    }
+    
+    
+    func testImportingJSONIGRF() throws {
+        let file = try loadSampleFile()
+        let sbj = StatsBookJSON(statsbook: file)
+        XCTAssertEqual(sbj.igrf.home.skaters[0].number, "120")
+        XCTAssertEqual(sbj.igrf.away.skaters[16].name, "Stough")
+        XCTAssertEqual(sbj.igrf.home.totalPoints, 72)
+        XCTAssertEqual(sbj.igrf.away.totalPenalties, 17)
     }
 }

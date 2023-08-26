@@ -18,17 +18,17 @@ public struct Comment {
     }
     
     /// The name of the author
-    var author: String? {
+    public var author: String? {
         sheet.comment(author: xml["authorId"])
     }
     
     /// The shape ID of the comment (we don't actually use this yet)
-    var shapeID: String? {
+    public var shapeID: String? {
         sheet.comment(author: xml["shapeId"])
     }
     
     /// The body of the comment, as plain text
-    var commentText: String {
+    public var commentText: String {
         xml.asString
     }
 }

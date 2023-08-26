@@ -11,8 +11,8 @@ import gandZip
 
 public class StatsBookFile {
     /// The file versions we support
-    public enum Version {
-        case January2019
+    public enum Version : String {
+        case January2019 = "January 2019 Release"
     }
     /// What version this is.  Note that this is only set during init
     public private(set) var version: Version

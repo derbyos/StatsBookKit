@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct StatsbookJSON : Codable {
+public struct StatsBookJSON : Codable {
     /// File metadata information (including the version from the Read Me sheet
     public var metadata: Metadata
     /// IGRF sheet
@@ -19,7 +19,7 @@ public struct StatsbookJSON : Codable {
     /// Lineups sheet
     public var lineups: Lineups
     
-    public static var blank =  StatsbookJSON(
+    public static var blank =  StatsBookJSON(
         metadata: .init(version: "January 2019 Release", hasComments: true),
         igrf: .init(home: .init(skaters: []),
                     away: .init(skaters:[])

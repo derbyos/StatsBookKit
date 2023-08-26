@@ -11,76 +11,122 @@ import Foundation
 /// A wrapper around the IGRF
 public struct IGRF : TypedSheetCover {
     
-    var sheet: Sheet
+    public var sheet: Sheet
     
     init(sheet: Sheet) {
         self.sheet = sheet
 //        _venueName = .init(sheet: sheet, row: 3, col: "B")
     }
 
-    struct CellDefinitions {
-        var venueName = CellDef<String?>("B3")
-        var city = CellDef<String?>("I3")
-        var state = CellDef<String?>("K3")
-        var gameNumber = CellDef<String?>("L3")
-        var tournament = CellDef<String?>("B5")
-        var hostLeague = CellDef<String?>("I5")
-        var date = CellDef<String?>("B7")
-        var time = CellDef<String?>("I7")
+    public struct CellDefinitions {
+        public var venueName = CellDef<String?>("B3")
+        public var city = CellDef<String?>("I3")
+        public var state = CellDef<String?>("K3")
+        public var gameNumber = CellDef<String?>("L3")
+        public var tournament = CellDef<String?>("B5")
+        public var hostLeague = CellDef<String?>("I5")
+        public var date = CellDef<String?>("B7")
+        public var time = CellDef<String?>("I7")
     }
     
-    static var cellDefinitions: CellDefinitions = .init()
+    public static var cellDefinitions: CellDefinitions = .init()
 
 
-    struct Team : TypedSheetCover {
-        var cellOffset: Address.Offset
-        var sheet: Sheet
+    public struct Team : TypedSheetCover {
+        public var cellOffset: Address.Offset
+        public var sheet: Sheet
         init(sheet: Sheet, offset: Address.Offset) {
             self.sheet = sheet
             self.cellOffset = offset
         }
         
         
-        struct CellDefinitions {
-            var league = CellDef<String?>("B10")
-            var team = CellDef<String?>("B11")
-            var state = CellDef<String?>("B12")
-            var period1Points = CellDef<Int?>("C36")
-            var period2Points = CellDef<Int?>("C37")
-            var totalPoints = CellDef<Int?>("C38")
-            var period1Penalties = CellDef<Int?>("F36")
-            var period2Penalties = CellDef<Int?>("F37")
-            var totalPenalties = CellDef<Int?>("F38")
+        public struct CellDefinitions {
+            public var league = CellDef<String?>("B10")
+            public var team = CellDef<String?>("B11")
+            public var color = CellDef<String?>("B12")
         }
         
-        static var cellDefinitions: CellDefinitions = .init()
+        public static var cellDefinitions: CellDefinitions = .init()
 
-        struct Skater : TypedSheetCover {
-            var cellOffset: Address.Offset
-            var sheet: Sheet
+        public struct Skater : TypedSheetCover {
+            public var cellOffset: Address.Offset
+            public var sheet: Sheet
             init(sheet: Sheet, offset: Address.Offset) {
                 self.sheet = sheet
                 self.cellOffset = offset
             }
             
-            struct CellDefinitions {
-                var number = CellDef<String?>("B14") 
-                var name = CellDef<String?>("C14") 
+            public struct CellDefinitions {
+                public var number = CellDef<String?>("B14")
+                public var name = CellDef<String?>("C14")
             }
-            static var cellDefinitions: CellDefinitions = .init()
+            public static var cellDefinitions: CellDefinitions = .init()
 
         }
-        func skater(index: Int) -> Skater {
+        /// Get the skater by index
+        /// - Parameter index: The one base index of the skater
+        /// - Returns: The skater record
+        public func skater(index: Int) -> Skater {
             // form a skater based on offset adding the index
             .init(sheet: sheet, offset: .init(dr: self.cellOffset.dr + index - 1, dc: self.cellOffset.dc))
         }
     }
-    var home: Team {
+    public var home: Team {
         .init(sheet: sheet, offset: .zero)
     }
-    var away: Team {
+    public var away: Team {
+        // move 7 columns to the right
+        .init(sheet: sheet, offset: .init(dc: 7))
+    }
+    
+    // unforutnately, the offset for totals isn't uniform - the difference
+    // between penalties is 7 but the difference between points is 6
+    public struct PenaltyTotals : TypedSheetCover {
+        public var cellOffset: Address.Offset
+        public var sheet: Sheet
+        init(sheet: Sheet, offset: Address.Offset) {
+            self.sheet = sheet
+            self.cellOffset = offset
+        }
+        
+        
+        public struct CellDefinitions {
+            public var period1 = CellDef<Int?>("F36")
+            public var period2 = CellDef<Int?>("F37")
+            public var total = CellDef<Int?>("F38")        }
+        public static var cellDefinitions: CellDefinitions = .init()
+    }
+
+    public struct PointTotals : TypedSheetCover {
+        public var cellOffset: Address.Offset
+        public var sheet: Sheet
+        init(sheet: Sheet, offset: Address.Offset) {
+            self.sheet = sheet
+            self.cellOffset = offset
+        }
+        
+        
+        public struct CellDefinitions {
+            public var period1 = CellDef<Int?>("C36")
+            public var period2 = CellDef<Int?>("C37")
+            public var total = CellDef<Int?>("C38")
+        }
+        public static var cellDefinitions: CellDefinitions = .init()
+    }
+    public var homePenalties: PenaltyTotals {
+        .init(sheet: sheet, offset: .zero)
+    }
+    public var awayPenalties: PenaltyTotals {
         // move 6 columns to the right
         .init(sheet: sheet, offset: .init(dc: 6))
+    }
+    public var homePoints: PointTotals {
+        .init(sheet: sheet, offset: .zero)
+    }
+    public var awayPoints: PointTotals {
+        // move 7 columns to the right
+        .init(sheet: sheet, offset: .init(dc: 7))
     }
 }
 

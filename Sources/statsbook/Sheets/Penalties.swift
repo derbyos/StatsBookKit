@@ -14,13 +14,13 @@ public struct Penalties {
     }
     /// Penalty data for a given period
     public struct Period : TypedSheetCover {
-        var sheet: Sheet
-        var cellOffset: Address.Offset
+        public var sheet: Sheet
+        public var cellOffset: Address.Offset
         init(sheet: Sheet, offset: Address.Offset) {
             self.sheet = sheet
             self.cellOffset = offset
         }
-        struct CellDefinitions {
+        public struct CellDefinitions {
             var homeName = CellDef<String?>("A1")
             var homeColor = CellDef<String?>("I1")
             var awayName = CellDef<String?>("Q1")
@@ -28,49 +28,49 @@ public struct Penalties {
             var date = CellDef<String?>("L1")
             var penaltyTracker = CellDef<String?>("N1")
         }
-        static var cellDefinitions = CellDefinitions()
+        public static var cellDefinitions = CellDefinitions()
         
         public struct Team : TypedSheetCover {
-            var sheet: Sheet
-            var cellOffset: Address.Offset
+            public var sheet: Sheet
+            public var cellOffset: Address.Offset
             init(sheet: Sheet, offset: Address.Offset) {
                 self.sheet = sheet
                 self.cellOffset = offset
             }
-            struct CellDefinitions {
+            public struct CellDefinitions {
                 /// total penalties for this team in this peariod
                 var totalPenalties = CellDef<Int?>("L44")
                 var notSkaterExplusionCount = CellDef<Int?>("E44")
             }
-            static var cellDefinitions = CellDefinitions()
+            public static var cellDefinitions = CellDefinitions()
             
             public struct Skater : TypedSheetCover {
-                var sheet: Sheet
-                var cellOffset: Address.Offset
+                public var sheet: Sheet
+                public var cellOffset: Address.Offset
                 init(sheet: Sheet, offset: Address.Offset) {
                     self.sheet = sheet
                     self.cellOffset = offset
                 }
-                struct CellDefinitions {
+                public struct CellDefinitions {
                     /// total penalties for this team in this peariod
                     var number = CellDef<String?>("A4")
                     var total = CellDef<Int?>("L4")
                 }
-                static var cellDefinitions = CellDefinitions()
+                public static var cellDefinitions = CellDefinitions()
                 
                 public struct Penalty : TypedSheetCover {
-                    var sheet: Sheet
-                    var cellOffset: Address.Offset
+                    public var sheet: Sheet
+                    public var cellOffset: Address.Offset
                     init(sheet: Sheet, offset: Address.Offset) {
                         self.sheet = sheet
                         self.cellOffset = offset
                     }
-                    struct CellDefinitions {
+                    public struct CellDefinitions {
                         /// total penalties for this team in this peariod
                         var code = CellDef<String?>("B4")
                         var jam = CellDef<Int?>("B5")
                     }
-                    static var cellDefinitions = CellDefinitions()
+                    public static var cellDefinitions = CellDefinitions()
                 }
                 
                 /// Find all penalties
