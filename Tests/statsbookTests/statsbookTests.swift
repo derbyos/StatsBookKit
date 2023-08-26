@@ -259,4 +259,14 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
         XCTAssertEqual(sbj.igrf.home.totalPoints, 72)
         XCTAssertEqual(sbj.igrf.away.totalPenalties, 17)
     }
+    
+    func testImportingJSONScore() throws {
+        let file = try loadSampleFile()
+        let sbj = StatsBookJSON(statsbook: file)
+        XCTAssertEqual(file.score.homeP1.totals.lead, 7)
+        XCTAssertEqual(file.score.awayP2.totals.lead, 14)
+
+        XCTAssertEqual(sbj.score.homeP1.totals.lead, 7)
+        XCTAssertEqual(sbj.score.awayP2.totals.lead, 14)
+    }
 }

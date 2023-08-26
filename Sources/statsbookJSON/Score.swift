@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import statsbook
 
 public struct Score: Codable {
     public var homeP1: TeamPeriod
@@ -15,11 +16,18 @@ public struct Score: Codable {
 
     /// All the data for a given team's period
     public struct TeamPeriod : Codable {
+        public init(scorekeeper: String? = nil, jammerRef: String? = nil, jams: [Score.TeamPeriod.Jam], totals: Score.TeamPeriod.Totals) {
+            _scorekeeper = .init(value: scorekeeper)
+            _jammerRef = .init(value: jammerRef)
+            self.jams = jams
+            self.totals = totals
+        }
+        
         // derived from IGRF
 //        var team : String?
 //        var color : String?
-        var scorekeeper : String?
-        var jammerRef : String?
+        @Commented public var scorekeeper : String?
+        @Commented public var jammerRef : String?
         // derived from IGRF
 //        var date : Double?
         
@@ -123,5 +131,77 @@ public struct Score: Codable {
         }
         
         public var totals: Totals
+    }
+}
+
+extension Score {
+    init(score sb: statsbook.Score) {
+        homeP1 = .init(score: sb.homeP1)
+        homeP2 = .init(score: sb.homeP2)
+        awayP1 = .init(score: sb.awayP1)
+        awayP2 = .init(score: sb.awayP2)
+    }
+}
+extension Score.TeamPeriod {
+    init(score sb: statsbook.Score.TeamPeriod) {
+        let score = Importer(tsc: sb)
+//        _team = score.team
+//        _color = score.color
+        _scorekeeper = score.scorekeeper
+        _jammerRef = score.jammerRef
+//        _date = score.date
+        jams = sb.allJams.map {
+            .init(jam: $0)
+        }
+        totals = .init(totals: sb.totals)
+    }
+}
+
+extension Score.TeamPeriod.Jam {
+    init(jam sb: statsbook.Score.TeamPeriod.Jam) {
+        let jam = Importer(tsc: sb)
+        _jammer = jam.jammer
+        _lost = jam.lost
+        _lead = jam.lead
+        _call = jam.call
+        _inj = jam.inj
+        _ni = jam.ni
+        _sp = jam.sp
+        _jam = jam.jam
+        _trip2 = jam.trip2
+        _trip3 = jam.trip3
+        _trip4 = jam.trip4
+        _trip5 = jam.trip5
+        _trip6 = jam.trip6
+        _trip7 = jam.trip7
+        _trip8 = jam.trip8
+        _trip9 = jam.trip9
+        _trip10 = jam.trip10
+        _jamTotal = jam.jamTotal
+        _gameTotal = jam.gameTotal
+        trips = sb.trips
+    }
+
+}
+extension Score.TeamPeriod.Totals {
+    init(totals sb: statsbook.Score.TeamPeriod.Totals) {
+        let totals = Importer(tsc: sb)
+        _jams = totals.jams
+        _lost = totals.lost
+        _lead = totals.lead
+        _call = totals.call
+        _inj = totals.inj
+        _ni = totals.ni
+        _trip2 = totals.trip2
+        _trip3 = totals.trip3
+        _trip4 = totals.trip4
+        _trip5 = totals.trip5
+        _trip6 = totals.trip6
+        _trip7 = totals.trip7
+        _trip8 = totals.trip8
+        _trip9 = totals.trip9
+        _trip10 = totals.trip10
+        _period = totals.period
+        _game = totals.game
     }
 }

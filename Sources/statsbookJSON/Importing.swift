@@ -11,7 +11,7 @@ extension StatsBookJSON {
     public init(statsbook: StatsBookFile) {
         self.metadata = .init(version: statsbook.version.rawValue, hasComments: true)
         self.igrf = .init(igrf: statsbook.igrf)
-        self.score = StatsBookJSON.blank.score
+        self.score = .init(score: statsbook.score)
         self.penalties = StatsBookJSON.blank.penalties
         self.lineups = StatsBookJSON.blank.lineups
     }
