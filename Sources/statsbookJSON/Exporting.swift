@@ -30,6 +30,29 @@ extension IGRF {
         igrf.date = date
         igrf.time = time
         // TODO: Save everything else
+        try home.export(to: igrf.home)
+        try away.export(to: igrf.away)
+    }
+}
+
+extension IGRF.Team {
+    public func export(to team: statsbook.IGRF.Team) throws {
+        team.league = league
+        team.team = self.team
+        team.color = color
+        for i in 1...20 {
+            if i <= skaters.count {
+                try self.skaters[i - 1].export(to: team.skater(index: i))
+            } else { // clear it
+                try Skater(number: nil, name: nil).export(to: team.skater(index: i))
+            }
+        }
+    }
+}
+extension IGRF.Team.Skater {
+    public func export(to skater: statsbook.IGRF.Team.Skater) throws {
+        skater.name = name
+        skater.number = number
     }
 }
 
