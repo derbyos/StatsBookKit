@@ -36,10 +36,21 @@ public class StatsBookFile {
     /// The zip reader that contains this file
     var zipFile: ZipReader
     
+    /// Saving
+    public var originalData: Data { zipFile.originalData }
+    
+    public func save() throws -> Data {
+        zipFile.save()
+    }
     /// Open an existing (or blank) statsbook
     /// - Parameter url: The URL
-    init(_ url: URL) throws {
-        zipFile = try ZipReader(data: Data(contentsOf: url))
+    public convenience init(_ url: URL) throws {
+        try self.init(Data(contentsOf: url))
+    }
+    /// Open an existing (or blank) statsbook as data
+    /// - Parameter data: The data of the file
+    public init(_ data: Data) throws {
+        zipFile = ZipReader(data: data)
         let workbookData = try zipFile.data(for: "xl/workbook.xml")
         guard let wbxml = try XML(workbookData).firstChild(named: "workbook") else {
             throw Errors.missingWorkbook

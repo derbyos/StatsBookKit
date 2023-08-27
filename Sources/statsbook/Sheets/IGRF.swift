@@ -13,7 +13,7 @@ public struct IGRF : TypedSheetCover {
     
     public var sheet: Sheet
     
-    init(sheet: Sheet) {
+    public init(sheet: Sheet) {
         self.sheet = sheet
 //        _venueName = .init(sheet: sheet, row: 3, col: "B")
     }

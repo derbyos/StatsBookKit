@@ -43,7 +43,7 @@ extension TypedSheetCover {
         get {
             return self[Self.cellDefinitions[keyPath: path].address]
         }
-        set {
+        nonmutating set {
             self[Self.cellDefinitions[keyPath: path].address] = newValue
         }
     }
@@ -52,7 +52,7 @@ extension TypedSheetCover {
         get {
             return self[Self.cellDefinitions[keyPath: path].address]
         }
-        set {
+        nonmutating set {
             self[Self.cellDefinitions[keyPath: path].address] = newValue
         }
     }
@@ -64,7 +64,7 @@ extension TypedSheetCover {
             }
             return nil
         }
-        set {
+        nonmutating set {
             self[Self.cellDefinitions[keyPath: path].address] = newValue.map{Double($0)}
         }
     }
@@ -73,7 +73,7 @@ extension TypedSheetCover {
         get {
             fatalError("Unsupported type in dynamic sheet page: \(String(describing: T.self))")
         }
-        set {
+        nonmutating set {
             fatalError("Unsupported type in dynamic sheet page")
         }
     }
@@ -84,7 +84,7 @@ extension TypedSheetCover {
             let cell = sheet[address.offset(by: cellOffset)]
             return try? cell?.eval()?.asString
         }
-        set {
+        nonmutating set {
             if let newValue {
                 sheet.cachedValues[address.offset(by: cellOffset)] = .string(newValue)
             } else {
@@ -98,7 +98,7 @@ extension TypedSheetCover {
             let cell = sheet[address.offset(by: cellOffset)]
             return try? cell?.eval()?.asNumber
         }
-        set {
+        nonmutating set {
             if let newValue {
                 sheet.cachedValues[address.offset(by: cellOffset)] = .number(newValue)
             } else {
@@ -145,3 +145,43 @@ public struct CommentFetcher<T: TypedSheetCover> {
         return Comment(xml: xml, sheet: sheet)
     }
 }
+
+// MARK: SwiftUI addons
+#if canImport(SwiftUI)
+import SwiftUI
+extension Sheet : ObservableObject {
+    
+}
+
+// A way to get the comment for a given field in a TypedSheetCover
+// This assume that the dynamic member is valid (or errors)
+@dynamicMemberLookup
+public struct BindingFetcher<T: TypedSheetCover> {
+    @ObservedObject var sheet: Sheet
+    var cellOffset: Address.Offset
+    public subscript(dynamicMember path: KeyPath<T.CellDefinitions, CellDef<String?>>) -> Binding<String> {
+        let address = T.cellDefinitions[keyPath: path].address.offset(by: cellOffset)
+        
+        return .init {
+            let cell = sheet[address]
+            return (try? cell?.eval()?.asString) ?? ""
+        } set: { newValue in
+            sheet.objectWillChange.send()
+            if newValue.isEmpty == false {
+                sheet.cachedValues[address] = .string(newValue)
+            } else {
+                sheet.cachedValues[address] = .undefined
+            }
+        }
+
+    }
+}
+
+extension TypedSheetCover {
+    /// Get a transformer that allows access to fields as bindings for SwiftUI (where
+    /// the sheet is the observed object
+    public var bindingFor: BindingFetcher<Self> {
+        .init(sheet: sheet, cellOffset: cellOffset)
+    }
+}
+#endif
