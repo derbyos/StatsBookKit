@@ -364,19 +364,21 @@ public struct ZipReader {
             entry.modified = data
             entry.localHeader.compression = UInt16(CompressionMethod.None.rawValue)
             entry.localHeader.compressedSize = UInt32(data.count)
-            entry.localHeader.unCompressedSize = UInt32(data.count)
         } else {
             entry.modified = compressed
             entry.localHeader.compression = UInt16(CompressionMethod.Deflated.rawValue)
-            entry.localHeader.compressedSize = UInt32(data.count)
-            entry.localHeader.unCompressedSize = UInt32(data.count)
+            entry.localHeader.compressedSize = UInt32(compressed.count)
         }
+        entry.localHeader.crc32 = data.crc32
+        entry.localHeader.unCompressedSize = UInt32(data.count)
         // remove the HasDataDescriptor (since we know how big it is, etc...)
         entry.localHeader.generalPurposeFlags.remove(.HasDataDescriptor)
         entry.header.generalPurposeFlags.remove(.HasDataDescriptor)
         entry.dataDescriptor = nil
 
+        // update the central header
         entry.header.compression = entry.localHeader.compression
+        entry.header.crc32 = entry.localHeader.crc32
         entry.header.compressedSize = entry.localHeader.compressedSize
         entry.header.unCompressedSize = entry.localHeader.unCompressedSize
         entry.header.generalFlags = entry.localHeader.generalFlags
