@@ -36,11 +36,21 @@ public class StatsBookFile {
     /// The zip reader that contains this file
     var zipFile: ZipReader
     
-    /// Saving
+    /// The unmodified data in the zip file (mostly for debugging purpose)
     public var originalData: Data { zipFile.originalData }
     
+    /// Save all the changes as a new zip file data
     public func save() throws -> Data {
-        zipFile.save()
+        for sheet in cachedSheets {
+            let xml = sheet.value.save()
+            // convert back to XML
+            let newData = xml.description
+            // where to save it?
+            let relPath = try relativePath(forSheet: sheet.key)
+            // add it
+            try zipFile.replace(newData.data(using: .utf8)!, for: "xl/" + relPath)
+        }
+        return zipFile.save()
     }
     /// Open an existing (or blank) statsbook
     /// - Parameter url: The URL
@@ -141,10 +151,7 @@ public class StatsBookFile {
         if let cached = cachedSheets[named] {
             return cached
         }
-        let wb = workbook
-        guard let sheet = wb.sheet(name: named), let sheetRID = sheet.rId, let relPath = worksheetRels[sheetRID] else {
-            throw Errors.undefinedSheetNamed(named)
-        }
+        let relPath = try relativePath(forSheet: named)
         let data = try zipFile.data(for: "xl/" + relPath)
         let xml = try XML(data)
         let relsData = try zipFile.data(for: "xl/worksheets/_rels/" + relPath.split(separator: "/").last! + ".rels")
@@ -152,5 +159,16 @@ public class StatsBookFile {
         let retval = Sheet(file: self, name: named, xml, rels: relXML)
         cachedSheets[named] = retval
         return retval
+    }
+    
+    /// Get the relative pathname for the sheet (such that it would be found inside "xl/"
+    /// - Parameter sheet: The sheet name
+    /// - Returns: <#description#>
+    func relativePath(forSheet named: String) throws -> String {
+        let wb = workbook
+        guard let sheet = wb.sheet(name: named), let sheetRID = sheet.rId, let relPath = worksheetRels[sheetRID] else {
+            throw Errors.undefinedSheetNamed(named)
+        }
+        return relPath
     }
 }

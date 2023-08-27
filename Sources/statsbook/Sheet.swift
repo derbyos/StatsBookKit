@@ -209,7 +209,7 @@ public class Sheet {
                             newType = "s"
                             newV = .element("v", namespace: nil, qName: nil, attributes: [:], children: [.characters("\(shared)")])
                         } else {
-                            newType = "inlinestr" // don't mess with shared strings yet
+                            newType = "inlineStr" // don't mess with shared strings yet
                             newV = .element("v", namespace: nil, qName: nil, attributes: [:], children: [.characters(s)])
                         }
                     case .undefined:
@@ -232,6 +232,8 @@ public class Sheet {
                             // delete it
                             newChildren.remove(at: vIndex)
                         }
+                    } else if let newV { // add a child for the new V
+                        newChildren.append(newV)
                     }
                     // and update the type (note that formula don't change)
                     if cell.formulaSource == nil {

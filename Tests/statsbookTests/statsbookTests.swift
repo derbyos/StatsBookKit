@@ -127,12 +127,20 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
         try sheet.recalc(reset: true)
         let saved = sheet.save()
         XCTAssertEqual(sheet.xml, saved)
+        let xmlText = saved.description
+        let reparsed = try XML(xmlText.data(using: .utf8)!)
+        let sheetXMLSrc = sheet.xml.description
+        let reparsedXMLSrc = reparsed.description
+        XCTAssertEqual(sheet.xml, reparsed)
+        XCTAssertEqual(sheetXMLSrc, reparsedXMLSrc)
     }
     
     func testSaveBlankXML() throws {
         let file = try loadBlankFile()
         try roundTripBlankFileXML(file, "IGRF")
         try roundTripBlankFileXML(file, "Score")
+        try roundTripBlankFileXML(file, "Penalties")
+        try roundTripBlankFileXML(file, "Lineups")
     }
     
     func testSaveUnchanged() throws {
@@ -151,6 +159,11 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
         }
     }
     
+    func testSaveChanged() throws {
+        let file = try loadBlankFile()
+        file.igrf.venueName = "Some Venue"
+        let newData = try file.save()
+    }
     func testIGRF() throws {
         let file = try loadSampleFile()
         let sheet = try file.sheet(named: "IGRF")

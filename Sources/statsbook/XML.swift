@@ -75,10 +75,13 @@ fileprivate class XMLBuilder : NSObject, XMLParserDelegate {
     }
 
     func parser(_ parser: XMLParser, foundExternalEntityDeclarationWithName name: String, publicID: String?, systemID: String?) {
+        print("foundExternalEntityDeclarationWithName")
     }
     func parser(_ parser: XMLParser, foundAttributeDeclarationWithName attributeName: String, forElement elementName: String, type: String?, defaultValue: String?) {
+        print("foundAttributeDeclarationWithName")
     }
     func parser(_ parser: XMLParser, foundUnparsedEntityDeclarationWithName name: String, publicID: String?, systemID: String?, notationName: String?) {
+        print("foundUnparsedEntityDeclarationWithName")
     }
 }
 /// A very simple XML model
@@ -202,7 +205,7 @@ extension XML : CustomStringConvertible {
     var description: String {
         switch self {
         case .document(let xml):
-            return #"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n"# + xml.map{$0.description}.joined()
+            return #"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>"# + "\n" + xml.map{$0.description}.joined()
         case .characters(let str):
             return str
                 .replacingOccurrences(of: "&", with: "&amp;")
@@ -211,9 +214,12 @@ extension XML : CustomStringConvertible {
         case .whitespace(let str):
             return str
         case .element(let name, namespace: let ns, qName: let qname, attributes: let attributes, children: let children):
+            assert(ns == nil)
+            assert(qname == nil)
             var retval = "<\(name)"
             if attributes.isEmpty == false {
-                for attr in attributes {
+                // we can't guarentee original order of attributes but we can make it stable
+                for attr in attributes.sorted(by: { $0.key < $1.key }) {
                     retval += " \(attr.key)=\"\(attr.value)\""
                 }
             }
@@ -223,7 +229,11 @@ extension XML : CustomStringConvertible {
                 retval += ">" + children.map{$0.description}.joined() + "</\(name)>"
             }
             return retval
-        case .cdata, .comment:
+        case .comment:
+            assert(false)
+            return ""
+        case .cdata:
+            assert(false)
             return ""
         default:
             fatalError("Unsupported XML serialization \(self)")

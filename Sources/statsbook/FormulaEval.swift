@@ -394,7 +394,7 @@ extension Cell {
                 return sheet.file[sharedString: sharedID].map{.string($0)}
             case "str": // more accurately, cell containing formula
                 return xml.firstChild(named: "v").map{.string($0.asString)}
-            case "inlinestr":
+            case "inlineStr":
                 return xml.firstChild(named: "v").map{.string($0.asString)}
                 //        case "b": // boolean
                 //            return xml.firstChild(named: "v").map{.string($0.asString)}
