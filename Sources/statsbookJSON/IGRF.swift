@@ -9,7 +9,7 @@ import Foundation
 import statsbook
 
 public struct IGRF: Codable {
-    public init(venueName: String? = nil, city: String? = nil, state: String? = nil, gameNumber: String? = nil, tournament: String? = nil, hostLeague: String? = nil, date: String? = nil, time: String? = nil, home: IGRF.Team, away: IGRF.Team) {
+    public init(venueName: String? = nil, city: String? = nil, state: String? = nil, gameNumber: String? = nil, tournament: String? = nil, hostLeague: String? = nil, date: String? = nil, time: String? = nil, home: IGRF.Team = .init(), away: IGRF.Team = .init()) {
         _venueName = .init(value: venueName)
         _city = .init(value: city)
         _state = .init(value: state)
@@ -34,7 +34,7 @@ public struct IGRF: Codable {
     
     
     public struct Team: Codable {
-        internal init(league: String? = nil, team: String? = nil, color: String? = nil, period1Points: Int? = nil, period2Points: Int? = nil, totalPoints: Int? = nil, period1Penalties: Int? = nil, period2Penalties: Int? = nil, totalPenalties: Int? = nil, skaters: [IGRF.Team.Skater]) {
+        public init(league: String? = nil, team: String? = nil, color: String? = nil, period1Points: Int? = nil, period2Points: Int? = nil, totalPoints: Int? = nil, period1Penalties: Int? = nil, period2Penalties: Int? = nil, totalPenalties: Int? = nil, skaters: [IGRF.Team.Skater] = []) {
             _league = .init(value:league)
             _team = .init(value:team)
             _color = .init(value:color)
@@ -51,6 +51,7 @@ public struct IGRF: Codable {
         @Commented public var team: String?
         @Commented public var color: String?
         
+        // These are derived values for convenience only
         @Commented public var period1Points : Int?
         @Commented public var period2Points : Int?
         @Commented public var totalPoints : Int?
@@ -59,7 +60,7 @@ public struct IGRF: Codable {
         @Commented public var totalPenalties : Int?
         
         public struct Skater: Codable {
-            internal init(number: String? = nil, name: String? = nil) {
+            public init(number: String? = nil, name: String? = nil) {
                 _number = .init(value:number)
                 _name = .init(value:name)
             }
@@ -71,6 +72,7 @@ public struct IGRF: Codable {
     }
     public var home: Team
     public var away: Team
+    
 }
 
 /// Sad that this extension has to be here (and not in importer) but `_foo` is private

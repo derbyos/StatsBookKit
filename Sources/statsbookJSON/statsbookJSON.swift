@@ -38,4 +38,11 @@ public struct StatsBookJSON : Codable {
                        awayP2: .init(jams: []))
     )
 
+    public init(metadata: Metadata, igrf: IGRF, score: Score, penalties: Penalties, lineups: Lineups) {
+        self.metadata = metadata
+        self.igrf = igrf
+        self.score = score
+        self.penalties = penalties
+        self.lineups = lineups
+    }
 }
