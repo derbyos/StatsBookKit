@@ -114,6 +114,12 @@ public struct Lineups {
             }
         }
         
+        public var maxJamRows : Int { 38 }
+        public subscript(jamRow index: Int) -> Jam {
+            return Jam(sheet: sheet, offset: cellOffset + .init(dr: index))
+        }
+        
+
         /// Get the line that contains that jam
         public func jam(number: Int) -> Jam? {
             var offset = 0

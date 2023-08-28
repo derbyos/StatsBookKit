@@ -175,6 +175,18 @@ public struct BindingFetcher<T: TypedSheetCover> {
         }
 
     }
+    public subscript(dynamicMember path: KeyPath<T.CellDefinitions, CellDef<Int?>>) -> Binding<Int> {
+        let address = T.cellDefinitions[keyPath: path].address.offset(by: cellOffset)
+        
+        return .init {
+            let cell = sheet[address]
+            return (try? cell?.eval()?.asNumber).map{Int($0)} ?? 0
+        } set: { newValue in
+            sheet.objectWillChange.send()
+            sheet.cachedValues[address] = .number(Double(newValue))
+        }
+
+    }
 }
 
 extension TypedSheetCover {

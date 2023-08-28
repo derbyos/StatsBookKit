@@ -58,10 +58,60 @@ extension IGRF.Team.Skater {
 
 extension Score {
     public func export(to score: statsbook.Score) throws {
-        // TODO: Save everything else
+        try homeP1.export(to: score.homeP1)
+        try homeP2.export(to: score.homeP2)
+        try awayP1.export(to: score.awayP1)
+        try awayP2.export(to: score.awayP2)
     }
 }
 
+extension Score.TeamPeriod {
+    public func export(to score: statsbook.Score.TeamPeriod) throws {
+        score.jammerRef = jammerRef
+        score.scorekeeper = scorekeeper
+        for i in 0..<score.maxJamRows {
+            let row = score[jamRow: i]
+            if i < self.jams.count {
+                try self.jams[i].export(to: row)
+            } else {
+                // save an empty one
+                try Jam(trips: []).export(to: row)
+            }
+        }
+        // nothing really in the totals, but in case there are comments
+        try totals.export(to: score.totals)
+    }
+}
+extension Score.TeamPeriod.Jam {
+    public func export(to jam: statsbook.Score.TeamPeriod.Jam) throws {
+        if let sp = self.sp {
+            jam.sp = sp
+        } else {
+            jam.jam = self.jam
+        }
+        jam.jammer = jammer
+        jam.lost = lost
+        jam.lead = lead
+        jam.call = call
+        jam.inj = inj
+        jam.ni = ni
+        // TODO: Add formula support for Trip1 in overtime and trips > 10
+        jam.trip2 = trip2
+        jam.trip3 = trip3
+        jam.trip4 = trip4
+        jam.trip5 = trip5
+        jam.trip6 = trip6
+        jam.trip7 = trip7
+        jam.trip8 = trip8
+        jam.trip9 = trip9
+        jam.trip10 = trip10
+    }
+}
+extension Score.TeamPeriod.Totals {
+    public func export(to score: statsbook.Score.TeamPeriod.Totals) throws {
+        // totals are all derived (save for potential comments, which are still TBD)
+    }
+}
 extension Lineups {
     public func export(to lineups: statsbook.Lineups) throws {
         // TODO: Save everything else
