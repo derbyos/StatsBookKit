@@ -41,7 +41,16 @@ public struct Commented<T:Codable & IsOptional> : Codable {
     public init(value: T) {
         self.value = value
     }
-    public var comment: String?
+    public struct Comment : Codable {
+        public init(text: String, author: String? = nil) {
+            self.text = text
+            self.author = author
+        }
+        
+        public var text: String
+        public var author: String?
+    }
+    public var comment: Comment?
     
     // we need this to be able to access the comment field
     // from outside the struct (since _foo is private)
@@ -58,7 +67,7 @@ public struct Commented<T:Codable & IsOptional> : Codable {
         // a comment
         if let container: KeyedDecodingContainer<Commented<T>.CodingKeys> = try? decoder.container(keyedBy: Commented<T>.CodingKeys.self) {
             self.value = try container.decode(T.self, forKey: Commented<T>.CodingKeys.value)
-            self.comment = try container.decodeIfPresent(String.self, forKey: Commented<T>.CodingKeys.comment)
+            self.comment = try container.decodeIfPresent(Comment.self, forKey: Commented<T>.CodingKeys.comment)
         } else {
             let singleValue = try decoder.singleValueContainer()
             // no comment

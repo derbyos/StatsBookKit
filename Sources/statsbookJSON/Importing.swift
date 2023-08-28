@@ -25,19 +25,25 @@ struct Importer<TSC:TypedSheetCover> {
     var tsc: TSC
     public subscript(dynamicMember path: KeyPath<TSC.CellDefinitions, CellDef<String?>>) -> Commented<String?> {
         var retval = Commented<String?>(value: tsc[dynamicMember: path])
-        retval.comment = tsc.commentFor[dynamicMember: path]?.commentText
+        if let comment = tsc.commentFor[dynamicMember: path] {
+            retval.comment = .init(text: comment.commentText, author: comment.author)
+        }
         return retval
     }
     
     public subscript(dynamicMember path: KeyPath<TSC.CellDefinitions, CellDef<Int?>>) -> Commented<Int?> {
         var retval = Commented<Int?>(value: tsc[dynamicMember: path])
-        retval.comment = tsc.commentFor[dynamicMember: path]?.commentText
+        if let comment = tsc.commentFor[dynamicMember: path] {
+            retval.comment = .init(text: comment.commentText, author: comment.author)
+        }
         return retval
     }
     
     public subscript(dynamicMember path: KeyPath<TSC.CellDefinitions, CellDef<Double?>>) -> Commented<Double?> {
         var retval = Commented<Double?>(value: tsc[dynamicMember: path])
-        retval.comment = tsc.commentFor[dynamicMember: path]?.commentText
+        if let comment = tsc.commentFor[dynamicMember: path] {
+            retval.comment = .init(text: comment.commentText, author: comment.author)
+        }
         return retval
     }
 }
