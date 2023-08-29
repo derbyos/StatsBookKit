@@ -70,9 +70,22 @@ public struct IGRF: Codable {
         }
         public var skaters: [Skater]
     }
+    public struct Official: Codable {
+        public init(role: String? = nil, name: String? = nil, league: String? = nil, cert: String? = nil) {
+            _role = .init(value:role)
+            _name = .init(value:name)
+            _league = .init(value:league)
+            _cert = .init(value:cert)
+        }
+        
+        @Commented public var role: String?
+        @Commented public var name: String?
+        @Commented public var league: String?
+        @Commented public var cert: String?
+    }
     public var home: Team
     public var away: Team
-    
+    public var officials: [Official] = []
 }
 
 /// Sad that this extension has to be here (and not in importer) but `_foo` is private
@@ -90,6 +103,18 @@ extension IGRF {
         _time = igrf.time
         home = .init(team: sb.home, penalties: sb.homePenalties, points: sb.homePoints)
         away = .init(team: sb.away, penalties: sb.awayPenalties, points: sb.awayPoints)
+        // generate all officials, including blank rows
+        officials = (1...sb.maxOfficials).map({.init(official: sb.official(index: $0))})
+    }
+}
+
+extension IGRF.Official {
+    init(official sb: statsbook.IGRF.Official) {
+        let official = Importer(tsc: sb)
+        _role = official.role
+        _name = official.name
+        _league = official.league
+        _cert = official.cert
     }
 }
 

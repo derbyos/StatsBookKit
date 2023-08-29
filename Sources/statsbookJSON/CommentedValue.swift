@@ -26,7 +26,8 @@ extension Optional : IsOptional {
     }
 }
 /// This is the property wrapper around all values that allow them to have comments associated
-/// with them
+/// with them.  More accurately, this is more like a "Cell" but we don't want to confuse the
+/// compiler with statsbook.Cell and try to make property wrappers in scopes
 @propertyWrapper
 public struct Commented<T:Codable & IsOptional> : Codable {
     public var wrappedValue: T {
@@ -41,6 +42,7 @@ public struct Commented<T:Codable & IsOptional> : Codable {
     public init(value: T) {
         self.value = value
     }
+    /// A comment is both the text of the comment as well as the author
     public struct Comment : Codable {
         public init(text: String, author: String? = nil) {
             self.text = text
@@ -50,8 +52,14 @@ public struct Commented<T:Codable & IsOptional> : Codable {
         public var text: String
         public var author: String?
     }
+    /// The comment stored in the cell
     public var comment: Comment?
-    
+    /// The formula stored in a cell (wanted for cells of trip 2 of an OT jam that
+    /// has a formula to say trip 1 + trip 2)
+    public var formula: String?
+    /// The format of a cell, for recording "strikethroughs" in the IGRF
+    public var format: String?
+
     // we need this to be able to access the comment field
     // from outside the struct (since _foo is private)
     public var projectedValue: Self {
@@ -68,6 +76,7 @@ public struct Commented<T:Codable & IsOptional> : Codable {
         if let container: KeyedDecodingContainer<Commented<T>.CodingKeys> = try? decoder.container(keyedBy: Commented<T>.CodingKeys.self) {
             self.value = try container.decode(T.self, forKey: Commented<T>.CodingKeys.value)
             self.comment = try container.decodeIfPresent(Comment.self, forKey: Commented<T>.CodingKeys.comment)
+            self.formula = try container.decodeIfPresent(String.self, forKey: .formula)
         } else {
             let singleValue = try decoder.singleValueContainer()
             // no comment
@@ -82,6 +91,8 @@ public struct Commented<T:Codable & IsOptional> : Codable {
     public enum CodingKeys: CodingKey {
         case value
         case comment
+        case formula
+        case format
     }
     
     public func encode(to encoder: Encoder) throws {

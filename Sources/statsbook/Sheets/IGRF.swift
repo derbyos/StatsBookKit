@@ -64,6 +64,8 @@ public struct IGRF : TypedSheetCover {
             public static var cellDefinitions: CellDefinitions = .init()
 
         }
+        // The maximum number of skaters
+        public let maxSkaters: Int = 20
         /// Get the skater by index
         /// - Parameter index: The one base index of the skater
         /// - Returns: The skater record
@@ -128,6 +130,33 @@ public struct IGRF : TypedSheetCover {
         // move 7 columns to the right
         .init(sheet: sheet, offset: .init(dc: 7))
     }
+    
+    public struct Official : TypedSheetCover {
+        public var cellOffset: Address.Offset
+        public var sheet: Sheet
+        init(sheet: Sheet, offset: Address.Offset) {
+            self.sheet = sheet
+            self.cellOffset = offset
+        }
+        public struct CellDefinitions {
+            public var role = CellDef<String?>("A60")
+            public var name = CellDef<String?>("C60")
+            public var league = CellDef<String?>("H60")
+            public var cert = CellDef<String?>("K60")
+        }
+        public static var cellDefinitions: CellDefinitions = .init()
+    }
+    
+    // The maximum number of officials
+    public let maxOfficials: Int = 28
+    /// Get the official by index
+    /// - Parameter index: The one base index of the skater
+    /// - Returns: The skater record
+    public func official(index: Int) -> Official {
+        // form a skater based on offset adding the index
+        .init(sheet: sheet, offset: .init(dr: index - 1))
+    }
+
 }
 
 

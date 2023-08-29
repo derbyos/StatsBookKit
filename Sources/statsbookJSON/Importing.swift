@@ -46,4 +46,13 @@ struct Importer<TSC:TypedSheetCover> {
         }
         return retval
     }
+    
+    
+    public subscript(dynamicMember path: KeyPath<TSC.CellDefinitions, CellDef<Bool?>>) -> Commented<Bool?> {
+        var retval = Commented<Bool?>(value: tsc[dynamicMember: path])
+        if let comment = tsc.commentFor[dynamicMember: path] {
+            retval.comment = .init(text: comment.commentText, author: comment.author)
+        }
+        return retval
+    }
 }
