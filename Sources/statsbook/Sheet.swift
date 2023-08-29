@@ -205,10 +205,17 @@ public class Sheet {
                         newType = "n"
                         newV = .element("v", namespace: nil, qName: nil, attributes: [:], children: [.characters("\(n)")])
                     case .string(let s):
-                        if let shared = file.lookup(sharedString: s) {
+                        if s == "" {
+                            // empty string, remove the value
+                            newType = nil
+                            newV = nil
+                        } else if let shared = file.lookup(sharedString: s) {
                             newType = "s"
                             newV = .element("v", namespace: nil, qName: nil, attributes: [:], children: [.characters("\(shared)")])
                         } else {
+                            // OpenOffice doesn't like inlineStr, so if
+                            // the file options are set lookup will return a
+                            // new value and not hit here
                             newType = "inlineStr" // don't mess with shared strings yet
                             newV = .element("v", namespace: nil, qName: nil, attributes: [:], children: [.characters(s)])
                         }

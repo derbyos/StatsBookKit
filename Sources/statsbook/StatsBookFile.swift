@@ -10,12 +10,24 @@ import Foundation
 import gandZip
 
 public class StatsBookFile {
+    public struct Options : OptionSet {
+        public var rawValue: Int
+        public init(rawValue: Int) {
+            self.rawValue = rawValue
+        }
+        public static let useInlineStr = Options(rawValue: 1 << 0)
+        
+        public static let `default` : Options = []
+    }
     /// The file versions we support
     public enum Version : String {
         case January2019 = "January 2019 Release"
     }
     /// What version this is.  Note that this is only set during init
     public private(set) var version: Version
+    
+    /// Various options
+    public var options: Options = .default
     
     /// The xml of the workbook
     let workbookXML : XML
@@ -33,6 +45,9 @@ public class StatsBookFile {
     /// Shared strings
     var sharedStrings : [XML] = []
     
+    /// Have we edited the shared strings?
+    var sharedStringsDirty : Bool = false
+    
     /// The zip reader that contains this file
     var zipFile: ZipReader
     
@@ -49,6 +64,11 @@ public class StatsBookFile {
             let relPath = try relativePath(forSheet: sheet.key)
             // add it
             try zipFile.replace(newData.data(using: .utf8)!, for: "xl/" + relPath)
+        }
+        if sharedStringsDirty {
+            let newData = sharedStringsData()
+            // hard code where this goes
+            try zipFile.replace(newData, for: "xl/sharedStrings.xml")
         }
         return zipFile.save()
     }
@@ -141,9 +161,32 @@ public class StatsBookFile {
     /// Find if the string is in the shared strings, if so return the index
     /// - Parameter sharedString: The string to search for
     /// - Returns: The index, if found
+    /// - Note: if useInlineStr is false, we will automatically add an item for that string to shared strings and mark it as dirty
     public func lookup(sharedString: String) -> Int? {
-        sharedStrings.firstIndex { $0.asString == sharedString }
+        let existing = sharedStrings.firstIndex { $0.asString == sharedString }
+        if options.contains(.useInlineStr) {
+            return existing
+        }
+        // make a new version
+        sharedStringsDirty = true
+        // this will be the index
+        let retval = sharedStrings.count
+        sharedStrings.append(XML.element("si", namespace: nil, qName: nil, attributes: [:], children: [.element("t", namespace: nil, qName: nil, attributes: [:], children: [.characters(sharedString)])]))
+        return retval
     }
+    
+    // Convert the (updated) shared strings to XML to data
+    func sharedStringsData() -> Data {
+        let xml = XML.document([
+            .element("sst", namespace: nil, qName: nil, attributes: [
+                "xmlns": "http://schemas.openxmlformats.org/spreadsheetml/2006/main",
+                "count": "\(sharedStrings.count)",
+                "uniqueCount": "\(Set<String>(sharedStrings.map{$0.asString}).count)" // not exactly correct if formatting within the element is different
+            ], children: sharedStrings)
+        ])
+        return xml.description.data(using: .utf8)!
+    }
+    
     /// A cache of all the sheets we've loaded
     var cachedSheets: [String : Sheet] = [:]
     /// Load a sheet by name, using the cached version if needed
