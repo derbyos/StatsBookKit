@@ -67,6 +67,19 @@ public struct Lineups : Codable {
         
         public var jams: [Jam]
         
+        public var maxJamRows : Int { 38 }
+        /// All possible jams rows
+        public var allJamRows : [Jam] {
+            get {
+                // pad out to maximum
+                .init((jams + .init(repeating: .init(), count: maxJamRows)).prefix(maxJamRows))
+            }
+            set {
+                jams = .init(newValue.prefix(maxJamRows))
+            }
+        }
+
+
         /// Get the line that contains that jam
         public func jam(number: Int, afterSP: Bool = false) -> Jam? {
             for ji in jams.enumerated() {

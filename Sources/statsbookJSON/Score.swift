@@ -104,6 +104,18 @@ public struct Score: Codable {
             }
             return nil
         }
+        
+        public var maxJamRows : Int { 38 }
+        /// All possible jams rows
+        public var allJamRows : [Jam] {
+            get {
+                // pad out to maximum
+                .init((jams + .init(repeating: .init(trips: []), count: maxJamRows)).prefix(maxJamRows))
+            }
+            set {
+                jams = .init(newValue.prefix(maxJamRows))
+            }
+        }
 
         public struct Totals : Codable {
             public init(jams: Int? = nil, lost: Int? = nil, lead: Int? = nil, call: Int? = nil, inj: Int? = nil, ni: Int? = nil, trip2: Int? = nil, trip3: Int? = nil, trip4: Int? = nil, trip5: Int? = nil, trip6: Int? = nil, trip7: Int? = nil, trip8: Int? = nil, trip9: Int? = nil, trip10: Int? = nil, period: Int? = nil, game: Int? = nil) {
