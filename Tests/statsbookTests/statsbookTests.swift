@@ -233,7 +233,7 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
     func testMinJSONComments() throws {
         var sbj = StatsBookJSON.blank
         sbj.igrf.city = "Toasterville"
-        sbj.igrf.$city.comment = "Not a real city"
+        sbj.igrf.$city.comment = .init(text: "Not a real city", author:"test")
         sbj.igrf.venueName = "Arena"
         let data = try JSONEncoder().encode(sbj)
         print(String(data: data, encoding: .utf8)!)
@@ -242,7 +242,7 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
         // make sure both commented and uncommented values are there
         // and the comment as well
         XCTAssertEqual(sbj.igrf.city, sbj2.igrf.city)
-        XCTAssertEqual(sbj.igrf.$city.comment, sbj2.igrf.$city.comment)
+        XCTAssertEqual(sbj.igrf.$city.comment?.text, sbj2.igrf.$city.comment?.text)
         XCTAssertEqual(sbj.igrf.venueName, sbj2.igrf.venueName)
         
         let encoderNoComment = JSONEncoder()
