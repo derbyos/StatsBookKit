@@ -13,11 +13,15 @@ safe information (for example, the home team name as a string from the
 IGRF, or the total number of penalties for a given team/period from the
 penalty sheet).
 
+## IMPORTANT:
+The actual API is still not stable and could have some major changes
 
-# TODO:
+## TODO:
 - Better handling of times/dates
 - Support for points scored on initial trip (in overtime jams) as a separate value
 - Support for more than 10 trips
+- Officials in IGRF
+- Cleaner design for jam vs jam row (where a jam would include the star pass data)
 
 ## statsbookJSON
 The statsbookJSON module is all the entered data found in the statsbook
@@ -29,7 +33,7 @@ It is designed to be minimal and mimick the layout of the Statsbook spreadsheet
 The JSON generated can include optional comments - by default, for a cell
 with no comment the value will be stored as expected.  If there is
 a comment associated with the cell the value will actually be an object
-with a `comment` (as a string) and a `value` (as whatever the value
+with a `comment` (as an object) and a `value` (as whatever the value
 actually is).  There is a flag in the encoder to remove comments.  Note
 that the JSON file also include a metadata flag that indicates if
 comments are used or not, so non-comment supporting reader can
@@ -39,3 +43,15 @@ This is designed to mimick the structure of the Statsbook as closely
 as possible - even though there may be better ways to organize the
 data in a data structure, we do not attempt to do so.
  
+### IMPORTANT:
+The actual API is still not stable and will have some major changes.  Don't
+use this for anything important yet.
+
+### TODO:
+- Figure out a solution for JSON holding initial trip and more than 10 trips
+    - Since each trip is stored separated, we can add in "trip1" and "trip11", etc...
+    - This would need to parse the formula for that cell
+- Support for OS
+- Write comments back to statsbook when "exporting"
+- Better structure for handling star passes 
+- Officials in IGRF
