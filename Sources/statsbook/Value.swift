@@ -64,7 +64,11 @@ public enum Value: Equatable {
         case .number(let d): return d
         case .undefined: return 0.0
         case .bool(let b): return b ? 1.0 : 0.0
-        case .string: return nil
+        case .string(let s):
+            if s == "" {
+                return 0.0
+            }
+            return nil
         }
     }
     var asString: String? {

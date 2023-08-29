@@ -75,7 +75,7 @@ extension Score.TeamPeriod {
                 try self.jams[i].export(to: row)
             } else {
                 // save an empty one
-                try Jam(trips: []).export(to: row)
+                try Jam().export(to: row)
             }
         }
         // nothing really in the totals, but in case there are comments

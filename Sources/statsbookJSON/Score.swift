@@ -35,7 +35,7 @@ public struct Score: Codable {
         /// or after a star pass).  Note that this isn't actually jam, rather a part of
         /// a jam, because of course, star passes
         public struct Jam : Codable {
-            public init(jammer: String? = nil, lost: String? = nil, lead: String? = nil, call: String? = nil, inj: String? = nil, ni: String? = nil, sp: String? = nil, jam: Int? = nil, trip2: Int? = nil, trip3: Int? = nil, trip4: Int? = nil, trip5: Int? = nil, trip6: Int? = nil, trip7: Int? = nil, trip8: Int? = nil, trip9: Int? = nil, trip10: Int? = nil, jamTotal: Int? = nil, gameTotal: Int? = nil, trips: [Int]) {
+            public init(jammer: String? = nil, lost: String? = nil, lead: String? = nil, call: String? = nil, inj: String? = nil, ni: String? = nil, sp: String? = nil, jam: Int? = nil, trip2: Int? = nil, trip3: Int? = nil, trip4: Int? = nil, trip5: Int? = nil, trip6: Int? = nil, trip7: Int? = nil, trip8: Int? = nil, trip9: Int? = nil, trip10: Int? = nil, jamTotal: Int? = nil, gameTotal: Int? = nil) {
                 _jammer = .init(value:jammer)
                 _lost = .init(value:lost)
                 _lead = .init(value:lead)
@@ -55,7 +55,6 @@ public struct Score: Codable {
                 _trip10 = .init(value:trip10)
                 _jamTotal = .init(value:jamTotal)
                 _gameTotal = .init(value:gameTotal)
-                self.trips = trips
             }
             
             @Commented public var jammer : String?
@@ -80,7 +79,17 @@ public struct Score: Codable {
             @Commented  public var jamTotal : Int?
             @Commented  public var gameTotal : Int?
             
-            public var trips: [Int]
+            public var trips: [Int] {
+                [trip2, trip3, trip4, trip5, trip6, trip7, trip8, trip9, trip10].compactMap({$0})
+            }
+            
+            /// Set the jam totals
+            var withTotals : Jam {
+                var retval = self
+                retval.jamTotal = trips.reduce(into: 0, {$0 + $1})
+                return retval
+            }
+
         }
         
         public var jams: [Jam]
@@ -106,16 +115,22 @@ public struct Score: Codable {
         }
         
         public var maxJamRows : Int { 38 }
+        public struct JamRow : Identifiable {
+            public var id: Int { index }
+            public var index: Int
+            public var row: Jam
+        }
         /// All possible jams rows
-        public var allJamRows : [Jam] {
+        public var allJamRows : [JamRow] {
             get {
                 // pad out to maximum
-                .init((jams + .init(repeating: .init(trips: []), count: maxJamRows)).prefix(maxJamRows))
+                .init((jams + .init(repeating: .init(), count: maxJamRows)).prefix(maxJamRows).enumerated().map{.init(index: $0.offset, row: $0.element)})
             }
             set {
-                jams = .init(newValue.prefix(maxJamRows))
+                jams = .init(newValue.prefix(maxJamRows).map{$0.row.withTotals})
             }
         }
+        
 
         public struct Totals : Codable {
             public init(jams: Int? = nil, lost: Int? = nil, lead: Int? = nil, call: Int? = nil, inj: Int? = nil, ni: Int? = nil, trip2: Int? = nil, trip3: Int? = nil, trip4: Int? = nil, trip5: Int? = nil, trip6: Int? = nil, trip7: Int? = nil, trip8: Int? = nil, trip9: Int? = nil, trip10: Int? = nil, period: Int? = nil, game: Int? = nil) {
@@ -211,7 +226,7 @@ extension Score.TeamPeriod.Jam {
         _trip10 = jam.trip10
         _jamTotal = jam.jamTotal
         _gameTotal = jam.gameTotal
-        trips = sb.trips
+//        trips = sb.trips
     }
 
 }
