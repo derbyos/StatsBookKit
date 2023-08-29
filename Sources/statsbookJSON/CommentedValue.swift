@@ -58,7 +58,10 @@ public struct Commented<T:Codable & IsOptional> : Codable {
     /// has a formula to say trip 1 + trip 2)
     public var formula: String?
     /// The format of a cell, for recording "strikethroughs" in the IGRF
-    public var format: String?
+    /// IMPORTANT: Format isn't supported yet, and probably won't remain a string:string map
+    /// Also note that "formatted text" in cells is actually a large nested series of paragraphs
+    /// and runs, and not a general "this entire cell is this format"
+    public var format: [String:String] = [:]
 
     // we need this to be able to access the comment field
     // from outside the struct (since _foo is private)
