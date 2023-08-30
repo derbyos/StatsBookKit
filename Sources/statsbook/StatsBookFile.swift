@@ -197,11 +197,19 @@ public class StatsBookFile {
         let relPath = try relativePath(forSheet: named)
         let data = try zipFile.data(for: "xl/" + relPath)
         let xml = try XML(data)
-        let relsData = try zipFile.data(for: "xl/worksheets/_rels/" + relPath.split(separator: "/").last! + ".rels")
-        let relXML = try XML(relsData)
-        let retval = Sheet(file: self, name: named, xml, rels: relXML)
-        cachedSheets[named] = retval
-        return retval
+        // The rels data is missing in some statsbooks that
+        // CRG generates
+        if let relsData = try? zipFile.data(for: "xl/worksheets/_rels/" + relPath.split(separator: "/").last! + ".rels") {
+            let relXML = try XML(relsData)
+            let retval = Sheet(file: self, name: named, xml, rels: relXML)
+            cachedSheets[named] = retval
+            return retval
+        } else {
+            // no relsData
+            let retval = Sheet(file: self, name: named, xml, rels: .document([]))
+            cachedSheets[named] = retval
+            return retval
+        }
     }
     
     /// Get the relative pathname for the sheet (such that it would be found inside "xl/"

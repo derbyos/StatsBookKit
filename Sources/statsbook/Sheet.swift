@@ -217,7 +217,7 @@ public class Sheet {
                             // the file options are set lookup will return a
                             // new value and not hit here
                             newType = "inlineStr" // don't mess with shared strings yet
-                            newV = .element("v", namespace: nil, qName: nil, attributes: [:], children: [.characters(s)])
+                            newV = .element("v", namespace: nil, qName: nil, attributes: [:], children: [.element("t", namespace: nil, qName: nil, attributes: [:], children: [.characters(s)])])
                         }
                     case .undefined:
                         // remove the contents
