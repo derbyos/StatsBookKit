@@ -9,7 +9,7 @@ import Foundation
 
 public struct Penalties: Codable {
     public struct Period: Codable {
-        public init(penaltyTracker: String? = nil, home: Penalties.Period.Team, away: Penalties.Period.Team) {
+        public init(penaltyTracker: String? = nil, home: Penalties.Period.Team = .init(), away: Penalties.Period.Team = .init()) {
             _penaltyTracker = .init(value:penaltyTracker)
             self.home = home
             self.away = away
@@ -23,7 +23,7 @@ public struct Penalties: Codable {
         @Commented public var penaltyTracker : String?
         
         public struct Team : Codable {
-            public init(totalPenalties: Int? = nil, nonSkaterExplusionCount: Int? = nil, skaters: [Penalties.Period.Team.Skater]) {
+            public init(totalPenalties: Int? = nil, nonSkaterExplusionCount: Int? = nil, skaters: FlexArray<Penalties.Period.Team.Skater> = []) {
                 _totalPenalties = .init(value:totalPenalties)
                 _nonSkaterExplusionCount = .init(value:nonSkaterExplusionCount)
                 self.skaters = skaters
@@ -33,20 +33,40 @@ public struct Penalties: Codable {
             @Commented public var totalPenalties : Int?
             @Commented public var nonSkaterExplusionCount : Int?
             
-            public struct Skater : Codable {
-                public init(number: String? = nil, total: Int? = nil, penalties: [Penalties.Period.Team.Skater.Penalty], foExp: Penalties.Period.Team.Skater.Penalty? = nil) {
+            public struct Skater : Codable, FlexArrayItem {
+                public init(number: String? = nil, total: Int? = nil, penalties: FlexArray<Penalties.Period.Team.Skater.Penalty>, foExp: Penalties.Period.Team.Skater.Penalty? = nil) {
                     _number = .init(value:number)
                     _total = .init(value:total)
                     self.penalties = penalties
-                    self.foExp = foExp
+                    _foExp = .init(value: foExp)
                 }
+                public init() {
+                    _number = .init(value: nil)
+                    _total = .init(value: nil)
+                    _foExp = .init(value: nil)
+                    penalties = []
+                }
+                public var isEmpty: Bool {
+                    penalties.isEmpty && _number.isEmpty && _total.isEmpty && _foExp.isEmpty
+                }
+                public static var maxItemCount: Int? { 20 }
                                 
                 // Technically this is copied from IGRF
                 @Commented public var number : String?
                 // And this is a derived value
                 @Commented public var total : Int?
 
-                public struct Penalty : Codable {
+                public struct Penalty : Codable, FlexArrayItem {
+                    public init() {
+                        _code = .init(value: nil)
+                        _jam = .init(value: nil)
+                    }
+                    public var isEmpty: Bool {
+                        code == nil && jam == nil
+                    }
+                    public static var maxItemCount: Int? {
+                        9
+                    }
                     public init(code: String? = nil, jam: Int? = nil) {
                         _code = .init(value:code)
                         _jam = .init(value:jam)
@@ -55,11 +75,11 @@ public struct Penalties: Codable {
                     @Commented public var code : String?
                     @Commented public var jam : Int?
                 }
-                public var penalties : [Penalty]
-                public var foExp: Penalty?
+                public var penalties : FlexArray<Penalty>
+                @Commented public var foExp: Penalty?
             }
             
-            public var skaters: [Skater]
+            public var skaters: FlexArray<Skater>
         }
         public var home : Team
         public var away : Team
@@ -90,9 +110,9 @@ extension Penalties.Period.Team {
         let team = Importer(tsc: sb)
         _totalPenalties = team.totalPenalties
         _nonSkaterExplusionCount = team.nonSkaterExplusionCount
-        skaters = sb.skaters().map {
+        skaters = .init(sb.skaters().map {
             .init(skater: $0)
-        }
+        })
     }
 }
 
@@ -101,7 +121,8 @@ extension Penalties.Period.Team.Skater {
         let skater = Importer(tsc: sb)
         _number = skater.number
         _total = skater.total
-        penalties = sb.penalties.map{ .init(penalty: $0) }
+        _foExp = .init(value: .init(penalty:sb.foExp))
+        penalties = .init(sb.penalties.map{ .init(penalty: $0) })
     }
 }
 

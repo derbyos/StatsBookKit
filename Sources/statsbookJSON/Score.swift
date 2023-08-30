@@ -86,7 +86,7 @@ public struct Score: Codable {
             /// Set the jam totals
             var withTotals : Jam {
                 var retval = self
-                retval.jamTotal = trips.reduce(into: 0, {$0 + $1})
+                retval.jamTotal = trips.reduce(0, {$0 + $1})
                 return retval
             }
 

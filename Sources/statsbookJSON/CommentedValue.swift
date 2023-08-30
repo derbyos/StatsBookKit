@@ -11,19 +11,22 @@ import Foundation
 public var RemoveCommentsKey = CodingUserInfoKey(rawValue: "statbookJSON.noComments")!
 
 /// Commented values are always optional, but there is built in way to enforce that
-
 public protocol IsOptional {
     var optionalIsNull: Bool { get }
     static var decodedNull : Self { get }
+    associatedtype UnwrappedType
+    var passThroughOptional: UnwrappedType? { get }
 }
 extension Optional : IsOptional {
     public static var decodedNull : Self { .none }
+    public typealias UnwrappedType = Wrapped
     public var optionalIsNull: Bool {
         switch self {
         case .none: return true
         default: return false
         }
     }
+    public var passThroughOptional: UnwrappedType? { self }
 }
 /// This is the property wrapper around all values that allow them to have comments associated
 /// with them.  More accurately, this is more like a "Cell" but we don't want to confuse the
@@ -146,5 +149,30 @@ extension Encoder where Self : KeyedEncodingContainerProtocol {
         } else {
             try encodeIfPresent(value, forKey: key)
         }
+    }
+}
+
+
+extension Commented {
+    var metaDataIsEmpty: Bool {
+        comment == nil && (formula == nil || formula == "") && format.isEmpty
+    }
+    /// Is the cell "empty" (no data, comments, etc..)
+    public var isEmpty : Bool {
+        value.optionalIsNull && metaDataIsEmpty
+    }
+}
+
+extension Commented where T == String? {
+    /// Is the cell "empty" (no data, comments, etc..).  For a string commented, an empty string also counts
+    public var isEmpty : Bool {
+        (value == nil || value == "") && metaDataIsEmpty
+    }
+}
+
+extension Commented where T.UnwrappedType : FlexArrayItem {
+    /// Is the cell "empty" (no data, comments, etc..).  For a string commented, an empty string also counts
+    public var isEmpty : Bool {
+        (value.passThroughOptional == nil || value.passThroughOptional!.isEmpty) && metaDataIsEmpty
     }
 }
