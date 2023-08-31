@@ -1,4 +1,4 @@
-# statsbook
+# StatsBookKit
 
 A Swift library to read/write WFTDA Statsbooks.  Note that currently we only support the January 2019 Release.
 
@@ -23,8 +23,8 @@ The actual API is still not stable and could have some major changes
 - Officials in IGRF
 - Cleaner design for jam vs jam row (where a jam would include the star pass data)
 
-## statsbookJSON
-The statsbookJSON module is all the entered data found in the statsbook
+## StatsBookKitJSON
+The StatsBookKitJSON module is all the entered data found in the statsbook
 as a JSON file.  It does not include anything that should be calculated
 by a formula in a "correct" statsbook, as well as some of the totals
 found for various places (these are effectively "read only" values).
