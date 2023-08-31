@@ -122,7 +122,7 @@ extension Penalties.Period.Team.Skater {
         _number = skater.number
         _total = skater.total
         _foExp = .init(value: .init(penalty:sb.foExp))
-        penalties = .init(sb.penalties.map{ .init(penalty: $0) })
+        penalties = .init(sb.penalties.map{ .init(penalty: $0) }.dropTrailingEmpty())
     }
 }
 

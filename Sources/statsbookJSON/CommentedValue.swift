@@ -163,6 +163,17 @@ extension Commented {
     }
 }
 
+
+extension Commented : FlexArrayItem {
+    public init() {
+        self.init(value: T.decodedNull)
+    }
+    
+    public static var maxItemCount: Int? {
+        nil
+    }
+    
+}
 extension Commented where T == String? {
     /// Is the cell "empty" (no data, comments, etc..).  For a string commented, an empty string also counts
     public var isEmpty : Bool {

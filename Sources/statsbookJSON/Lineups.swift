@@ -21,7 +21,7 @@ public struct Lineups : Codable {
     public var awayP2: TeamPeriod
     
     public struct TeamPeriod : Codable {
-        public init(lineupTracker: String? = nil, jams: [Lineups.TeamPeriod.Jam]) {
+        public init(lineupTracker: String? = nil, jams: FlexArray<Lineups.TeamPeriod.Jam>) {
             _lineupTracker = .init(value:lineupTracker)
 //            _date = .init(value:date)
             self.jams = jams
@@ -50,13 +50,13 @@ public struct Lineups : Codable {
             @Commented public var noPivot : String?
             
             public struct Skater : Codable {
-                internal init(number: String? = nil, boxTrips: [String]) {
+                internal init(number: String? = nil, boxTrips: FlexArray<Commented<String?>>) {
                     _number = .init(value:number)
                     self.boxTrips = boxTrips
                 }
                 
                 @Commented public var number : String?
-                public var boxTrips: [String]
+                public var boxTrips: FlexArray<Commented<String?>>
             }
             public var jammer: Skater?
             public var pivot: Skater?
@@ -65,19 +65,9 @@ public struct Lineups : Codable {
             public var blocker3: Skater?
         }
         
-        public var jams: [Jam]
+        public var jams: FlexArray<Jam>
         
-        public var maxJamRows : Int { 38 }
-        /// All possible jams rows
-        public var allJamRows : [Jam] {
-            get {
-                // pad out to maximum
-                .init((jams + .init(repeating: .init(), count: maxJamRows)).prefix(maxJamRows))
-            }
-            set {
-                jams = .init(newValue.prefix(maxJamRows))
-            }
-        }
+        public var maxJamRows : Int { Jam.maxItemCount! }
 
 
         /// Get the line that contains that jam
@@ -117,11 +107,15 @@ extension Lineups {
 extension Lineups.TeamPeriod {
     init(teamPeriod sb: statsbook.Lineups.TeamPeriod) {
         _lineupTracker = Importer(tsc: sb).lineupTracker
-        jams = sb.jams.map{.init(jam: $0)}
+        jams = .init(sb.jams.map{.init(jam: $0)})
     }
 }
 
-extension Lineups.TeamPeriod.Jam {
+extension Lineups.TeamPeriod.Jam : FlexArrayItem {
+    public static var maxItemCount: Int? {
+        38
+    }
+    
     init(jam sb: statsbook.Lineups.TeamPeriod.Jam) {
         let importer = Importer(tsc: sb)
         _sp = importer.sp
@@ -133,13 +127,33 @@ extension Lineups.TeamPeriod.Jam {
         blocker2 = .init(skater: sb.blocker2)
         blocker3 = .init(skater: sb.blocker3)
     }
+    
+    public init() {
+        self.init(sp: nil, jam: nil, noPivot: nil, jammer: nil, pivot: nil, blocker1: nil, blocker2: nil, blocker3: nil)
+    }
+    public var isEmpty: Bool {
+        _sp.isEmpty && _jam.isEmpty && _noPivot.isEmpty &&
+        jammer?.isEmpty != false && pivot?.isEmpty != false && blocker1?.isEmpty != false && blocker2?.isEmpty != false && blocker3?.isEmpty != false
+    }
 }
 
 
-extension Lineups.TeamPeriod.Jam.Skater {
+extension Lineups.TeamPeriod.Jam.Skater : FlexArrayItem {
+    public init() {
+        self.init(number: nil, boxTrips: [])
+    }
+    
+    public static var maxItemCount: Int? {
+        5
+    }
+    
     init(skater sb: statsbook.Lineups.TeamPeriod.Jam.Skater) {
         let importer = Importer(tsc: sb)
         _number = importer.number
-        boxTrips = sb.boxTrips
+        boxTrips = .init(maxCount: 3, sb.boxTrips.map{.init(value: $0)})
+    }
+    
+    public var isEmpty: Bool {
+        _number.isEmpty && boxTrips.isEmpty
     }
 }

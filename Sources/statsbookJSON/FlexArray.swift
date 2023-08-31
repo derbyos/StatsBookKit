@@ -18,7 +18,17 @@ public protocol FlexArrayItem {
     static var maxItemCount : Int? { get }
 }
 
-
+extension Array where Element : FlexArrayItem {
+    /// Construct a new array dropping the last empty elements of this one
+    /// - Returns: The array with the trailing empties trimmed off
+    public func dropTrailingEmpty() -> Self {
+        var retval = self
+        while retval.last?.isEmpty == true {
+            _ = retval.popLast()
+        }
+        return retval
+    }
+}
 public struct FlexArray<Element: FlexArrayItem> : Sequence, RandomAccessCollection, MutableCollection {
     public var startIndex: Int { 0 }
     
