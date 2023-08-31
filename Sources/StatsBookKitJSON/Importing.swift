@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import statsbook
+import StatsBookKit
 extension StatsBookJSON {
     public init(statsbook: StatsBookFile) {
         self.metadata = .init(version: statsbook.version.rawValue, hasComments: true)

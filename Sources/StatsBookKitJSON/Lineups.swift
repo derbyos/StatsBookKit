@@ -94,9 +94,9 @@ public struct Lineups : Codable {
 }
 
 
-import statsbook
+import StatsBookKit
 extension Lineups {
-    init(lineups sb: statsbook.Lineups) {
+    init(lineups sb: StatsBookKit.Lineups) {
         homeP1 = .init(teamPeriod: sb.homeP1)
         homeP2 = .init(teamPeriod: sb.homeP2)
         awayP1 = .init(teamPeriod: sb.awayP1)
@@ -105,7 +105,7 @@ extension Lineups {
 }
 
 extension Lineups.TeamPeriod {
-    init(teamPeriod sb: statsbook.Lineups.TeamPeriod) {
+    init(teamPeriod sb: StatsBookKit.Lineups.TeamPeriod) {
         _lineupTracker = Importer(tsc: sb).lineupTracker
         jams = .init(sb.jams.map{.init(jam: $0)})
     }
@@ -116,7 +116,7 @@ extension Lineups.TeamPeriod.Jam : FlexArrayItem {
         38
     }
     
-    init(jam sb: statsbook.Lineups.TeamPeriod.Jam) {
+    init(jam sb: StatsBookKit.Lineups.TeamPeriod.Jam) {
         let importer = Importer(tsc: sb)
         _sp = importer.sp
         _jam = importer.jam
@@ -147,7 +147,7 @@ extension Lineups.TeamPeriod.Jam.Skater : FlexArrayItem {
         5
     }
     
-    init(skater sb: statsbook.Lineups.TeamPeriod.Jam.Skater) {
+    init(skater sb: StatsBookKit.Lineups.TeamPeriod.Jam.Skater) {
         let importer = Importer(tsc: sb)
         _number = importer.number
         boxTrips = .init(maxCount: 3, sb.boxTrips.map{.init(value: $0)})

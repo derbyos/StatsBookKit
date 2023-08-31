@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import statsbook
+import StatsBookKit
 
 public struct IGRF: Codable {
     public init(venueName: String? = nil, city: String? = nil, state: String? = nil, gameNumber: String? = nil, tournament: String? = nil, hostLeague: String? = nil, date: String? = nil, time: String? = nil, suspension: Bool? = false, home: IGRF.Team = .init(), away: IGRF.Team = .init(), officials: [IGRF.Official] = [], requiredOS: Bool? = nil, reasonForOS: String? = nil, signatures: Signatures = .init(), suspensionServedBy: String? = nil, expulsions: FlexArray<IGRF.Explusion> = []) {
@@ -145,7 +145,7 @@ public struct IGRF: Codable {
 /// Sad that this extension has to be here (and not in importer) but `_foo` is private
 /// and can only be accessed by extensions in this file
 extension IGRF {
-    init(igrf sb: statsbook.IGRF) {
+    init(igrf sb: StatsBookKit.IGRF) {
         let igrf = Importer(tsc: sb)
         _venueName = igrf.venueName
         _city = igrf.city
@@ -169,7 +169,7 @@ extension IGRF {
 }
 
 extension IGRF.Official {
-    init(official sb: statsbook.IGRF.Official) {
+    init(official sb: StatsBookKit.IGRF.Official) {
         let official = Importer(tsc: sb)
         _role = official.role
         _name = official.name
@@ -178,7 +178,7 @@ extension IGRF.Official {
     }
 }
 extension IGRF.Explusion {
-    init(expulsion sb: statsbook.IGRF.Expulsion) {
+    init(expulsion sb: StatsBookKit.IGRF.Expulsion) {
         let explusion = Importer(tsc: sb)
         _expulsion = explusion.expulsion
         _suspension = explusion.suspension
@@ -186,7 +186,7 @@ extension IGRF.Explusion {
 }
 
 extension IGRF.Signature {
-    init(signature sb: statsbook.IGRF.Signatures.Signature) {
+    init(signature sb: StatsBookKit.IGRF.Signatures.Signature) {
         let signature = Importer(tsc: sb)
         _signature = .init(value: nil) // we don't have images yet
         _legalName = signature.legalName
@@ -195,7 +195,7 @@ extension IGRF.Signature {
 }
 
 extension IGRF.Signatures {
-    init(signatures: statsbook.IGRF.Signatures) {
+    init(signatures: StatsBookKit.IGRF.Signatures) {
         homeTeamCaptain = .init(signature: signatures.homeTeamCaptain)
         awayTeamCaptain = .init(signature: signatures.awayTeamCaptain)
         headReferee = .init(signature: signatures.headReferee)
@@ -204,7 +204,7 @@ extension IGRF.Signatures {
 }
 
 extension IGRF.Team {
-    init(team sb: statsbook.IGRF.Team, penalties: statsbook.IGRF.PenaltyTotals, points:statsbook.IGRF.PointTotals) {
+    init(team sb: StatsBookKit.IGRF.Team, penalties: StatsBookKit.IGRF.PenaltyTotals, points:StatsBookKit.IGRF.PointTotals) {
         let team = Importer(tsc: sb)
         _league = team.league
         _team = team.team
@@ -226,7 +226,7 @@ extension IGRF.Team {
 }
 
 extension IGRF.Team.Skater {
-    init(skater sb: statsbook.IGRF.Team.Skater) {
+    init(skater sb: StatsBookKit.IGRF.Team.Skater) {
         let skater = Importer(tsc: sb)
         _number = skater.number
         _name = skater.name

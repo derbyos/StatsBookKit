@@ -1,4 +1,4 @@
-public struct statsbook_scoping {
+public struct StatsBookKit_scoping {
     // add typealiass so we can import but still get IGRF from here
     // because module importing vs current module doesn't easily support
     // module scoping

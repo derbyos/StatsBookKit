@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import statsbook
+import StatsBookKit
 extension StatsBookJSON {
     // Take the data in our json and export it into a statsbook xlsx file
     public func export(to statsbook: StatsBookFile) throws {
@@ -19,7 +19,7 @@ extension StatsBookJSON {
 }
 
 extension IGRF {
-    public func export(to igrf: statsbook.IGRF) throws {
+    public func export(to igrf: StatsBookKit.IGRF) throws {
         // TODO: Save comments
         igrf.venueName = venueName
         igrf.city = city
@@ -36,7 +36,7 @@ extension IGRF {
 }
 
 extension IGRF.Team {
-    public func export(to team: statsbook.IGRF.Team) throws {
+    public func export(to team: StatsBookKit.IGRF.Team) throws {
         team.league = league
         team.team = self.team
         team.color = color
@@ -50,14 +50,14 @@ extension IGRF.Team {
     }
 }
 extension IGRF.Team.Skater {
-    public func export(to skater: statsbook.IGRF.Team.Skater) throws {
+    public func export(to skater: StatsBookKit.IGRF.Team.Skater) throws {
         skater.name = name
         skater.number = number
     }
 }
 
 extension Score {
-    public func export(to score: statsbook.Score) throws {
+    public func export(to score: StatsBookKit.Score) throws {
         try homeP1.export(to: score.homeP1)
         try homeP2.export(to: score.homeP2)
         try awayP1.export(to: score.awayP1)
@@ -66,7 +66,7 @@ extension Score {
 }
 
 extension Score.TeamPeriod {
-    public func export(to score: statsbook.Score.TeamPeriod) throws {
+    public func export(to score: StatsBookKit.Score.TeamPeriod) throws {
         score.jammerRef = jammerRef
         score.scorekeeper = scorekeeper
         for i in 0..<score.maxJamRows {
@@ -83,7 +83,7 @@ extension Score.TeamPeriod {
     }
 }
 extension Score.TeamPeriod.Jam {
-    public func export(to jam: statsbook.Score.TeamPeriod.Jam) throws {
+    public func export(to jam: StatsBookKit.Score.TeamPeriod.Jam) throws {
         if let sp = self.sp {
             jam.sp = sp
         } else {
@@ -108,18 +108,18 @@ extension Score.TeamPeriod.Jam {
     }
 }
 extension Score.TeamPeriod.Totals {
-    public func export(to score: statsbook.Score.TeamPeriod.Totals) throws {
+    public func export(to score: StatsBookKit.Score.TeamPeriod.Totals) throws {
         // totals are all derived (save for potential comments, which are still TBD)
     }
 }
 extension Lineups {
-    public func export(to lineups: statsbook.Lineups) throws {
+    public func export(to lineups: StatsBookKit.Lineups) throws {
         // TODO: Save everything else
     }
 }
 
 extension Penalties {
-    public func export(to penalties: statsbook.Penalties) throws {
+    public func export(to penalties: StatsBookKit.Penalties) throws {
         // TODO: Save everything else
     }
 }

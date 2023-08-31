@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import statsbook
+import StatsBookKit
 
 public struct Score: Codable {
     public var homeP1: TeamPeriod
@@ -182,7 +182,7 @@ public struct Score: Codable {
 }
 
 extension Score {
-    init(score sb: statsbook.Score) {
+    init(score sb: StatsBookKit.Score) {
         homeP1 = .init(score: sb.homeP1)
         homeP2 = .init(score: sb.homeP2)
         awayP1 = .init(score: sb.awayP1)
@@ -190,7 +190,7 @@ extension Score {
     }
 }
 extension Score.TeamPeriod {
-    init(score sb: statsbook.Score.TeamPeriod) {
+    init(score sb: StatsBookKit.Score.TeamPeriod) {
         let score = Importer(tsc: sb)
 //        _team = score.team
 //        _color = score.color
@@ -205,7 +205,7 @@ extension Score.TeamPeriod {
 }
 
 extension Score.TeamPeriod.Jam {
-    init(jam sb: statsbook.Score.TeamPeriod.Jam) {
+    init(jam sb: StatsBookKit.Score.TeamPeriod.Jam) {
         let jam = Importer(tsc: sb)
         _jammer = jam.jammer
         _lost = jam.lost
@@ -231,7 +231,7 @@ extension Score.TeamPeriod.Jam {
 
 }
 extension Score.TeamPeriod.Totals {
-    init(totals sb: statsbook.Score.TeamPeriod.Totals) {
+    init(totals sb: StatsBookKit.Score.TeamPeriod.Totals) {
         let totals = Importer(tsc: sb)
         _jams = totals.jams
         _lost = totals.lost

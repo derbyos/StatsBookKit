@@ -88,17 +88,17 @@ public struct Penalties: Codable {
     public var period2 : Period
 }
 
-import statsbook
+import StatsBookKit
 
 extension Penalties {
-    init(penalties sb: statsbook.Penalties) {
+    init(penalties sb: StatsBookKit.Penalties) {
         period1 = .init(penalties: sb.period1)
         period2 = .init(penalties: sb.period2)
     }
 }
 
 extension Penalties.Period {
-    init(penalties sb: statsbook.Penalties.Period) {
+    init(penalties sb: StatsBookKit.Penalties.Period) {
         _penaltyTracker = Importer(tsc: sb).penaltyTracker
         home = .init(team: sb.home)
         away = .init(team: sb.away)
@@ -106,7 +106,7 @@ extension Penalties.Period {
 }
 
 extension Penalties.Period.Team {
-    init(team sb: statsbook.Penalties.Period.Team) {
+    init(team sb: StatsBookKit.Penalties.Period.Team) {
         let team = Importer(tsc: sb)
         _totalPenalties = team.totalPenalties
         _nonSkaterExplusionCount = team.nonSkaterExplusionCount
@@ -117,7 +117,7 @@ extension Penalties.Period.Team {
 }
 
 extension Penalties.Period.Team.Skater {
-    init(skater sb: statsbook.Penalties.Period.Team.Skater) {
+    init(skater sb: StatsBookKit.Penalties.Period.Team.Skater) {
         let skater = Importer(tsc: sb)
         _number = skater.number
         _total = skater.total
@@ -127,7 +127,7 @@ extension Penalties.Period.Team.Skater {
 }
 
 extension Penalties.Period.Team.Skater.Penalty {
-    init(penalty sb: statsbook.Penalties.Period.Team.Skater.Penalty) {
+    init(penalty sb: StatsBookKit.Penalties.Period.Team.Skater.Penalty) {
         let penalty = Importer(tsc: sb)
         _jam = penalty.jam
         _code = penalty.code

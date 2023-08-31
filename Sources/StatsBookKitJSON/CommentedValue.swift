@@ -30,7 +30,7 @@ extension Optional : IsOptional {
 }
 /// This is the property wrapper around all values that allow them to have comments associated
 /// with them.  More accurately, this is more like a "Cell" but we don't want to confuse the
-/// compiler with statsbook.Cell and try to make property wrappers in scopes
+/// compiler with StatsBookKit.Cell and try to make property wrappers in scopes
 @propertyWrapper
 public struct Commented<T:Codable & IsOptional> : Codable {
     public var wrappedValue: T {
