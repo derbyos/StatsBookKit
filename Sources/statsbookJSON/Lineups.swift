@@ -38,11 +38,11 @@ public struct Lineups : Codable {
                 _sp = .init(value:sp)
                 _jam = .init(value:jam)
                 _noPivot = .init(value:noPivot)
-                self.jammer = jammer
-                self.pivot = pivot
-                self.blocker1 = blocker1
-                self.blocker2 = blocker2
-                self.blocker3 = blocker3
+                self.jammer = jammer ?? .init()
+                self.pivot = pivot ?? .init()
+                self.blocker1 = blocker1 ?? .init()
+                self.blocker2 = blocker2 ?? .init()
+                self.blocker3 = blocker3 ?? .init()
             }
             
             @Commented public var sp : String?
@@ -58,11 +58,11 @@ public struct Lineups : Codable {
                 @Commented public var number : String?
                 public var boxTrips: FlexArray<Commented<String?>>
             }
-            public var jammer: Skater?
-            public var pivot: Skater?
-            public var blocker1: Skater?
-            public var blocker2: Skater?
-            public var blocker3: Skater?
+            public var jammer: Skater
+            public var pivot: Skater
+            public var blocker1: Skater
+            public var blocker2: Skater
+            public var blocker3: Skater
         }
         
         public var jams: FlexArray<Jam>
@@ -133,7 +133,7 @@ extension Lineups.TeamPeriod.Jam : FlexArrayItem {
     }
     public var isEmpty: Bool {
         _sp.isEmpty && _jam.isEmpty && _noPivot.isEmpty &&
-        jammer?.isEmpty != false && pivot?.isEmpty != false && blocker1?.isEmpty != false && blocker2?.isEmpty != false && blocker3?.isEmpty != false
+        jammer.isEmpty && pivot.isEmpty && blocker1.isEmpty && blocker2.isEmpty && blocker3.isEmpty
     }
 }
 
