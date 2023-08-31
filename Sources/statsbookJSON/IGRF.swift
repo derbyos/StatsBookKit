@@ -9,7 +9,7 @@ import Foundation
 import statsbook
 
 public struct IGRF: Codable {
-    public init(venueName: String? = nil, city: String? = nil, state: String? = nil, gameNumber: String? = nil, tournament: String? = nil, hostLeague: String? = nil, date: String? = nil, time: String? = nil, home: IGRF.Team = .init(), away: IGRF.Team = .init()) {
+    public init(venueName: String? = nil, city: String? = nil, state: String? = nil, gameNumber: String? = nil, tournament: String? = nil, hostLeague: String? = nil, date: String? = nil, time: String? = nil, suspension: Bool? = false, home: IGRF.Team = .init(), away: IGRF.Team = .init(), officials: [IGRF.Official] = [], requiredOS: Bool? = nil, reasonForOS: String? = nil, signatures: Signatures = .init(), suspensionServedBy: String? = nil, expulsions: FlexArray<IGRF.Explusion> = []) {
         _venueName = .init(value: venueName)
         _city = .init(value: city)
         _state = .init(value: state)
@@ -18,8 +18,15 @@ public struct IGRF: Codable {
         _hostLeague = .init(value: hostLeague)
         _date = .init(value: date)
         _time = .init(value: time)
+        _suspension = .init(value: suspension)
+        _suspensionServedBy = .init(value: suspensionServedBy)
+        _requiredOS = .init(value: requiredOS)
+        _reasonForOS = .init(value: reasonForOS)
         self.home = home
         self.away = away
+        self.officials = officials
+        self.signatures = signatures
+        self.expulsions = expulsions
     }
     
     
@@ -32,6 +39,7 @@ public struct IGRF: Codable {
     @Commented public var date: String?
     @Commented public var time: String?
     
+    @Commented public var suspension: Bool?
     
     public struct Team: Codable {
         public init(league: String? = nil, team: String? = nil, color: String? = nil, period1Points: Int? = nil, period2Points: Int? = nil, totalPoints: Int? = nil, period1Penalties: Int? = nil, period2Penalties: Int? = nil, totalPenalties: Int? = nil, skaters: [IGRF.Team.Skater] = []) {
@@ -83,9 +91,55 @@ public struct IGRF: Codable {
         @Commented public var league: String?
         @Commented public var cert: String?
     }
+    
+    public struct Signature: Codable {
+        public init(skateName: String? = nil, legalName: String? = nil, signature: Data? = nil) {
+            _skateName = .init(value:skateName)
+            _legalName = .init(value:legalName)
+            _signature = .init(value:signature)
+        }
+        
+        @Commented public var skateName: String?
+        @Commented public var legalName: String?
+        @Commented public var signature: Data? // as a PNG or other image format
+    }
+    public struct Signatures: Codable {
+        public init(homeTeamCaptain: IGRF.Signature = .init(), awayTeamCaptain: IGRF.Signature = .init(), headReferee: IGRF.Signature = .init(), headNSO: IGRF.Signature = .init()) {
+            self.homeTeamCaptain = homeTeamCaptain
+            self.awayTeamCaptain = awayTeamCaptain
+            self.headReferee = headReferee
+            self.headNSO = headNSO
+        }
+        
+        public var homeTeamCaptain: Signature
+        public var awayTeamCaptain: Signature
+        public var headReferee: Signature
+        public var headNSO: Signature
+    }
     public var home: Team
     public var away: Team
     public var officials: [Official] = []
+    public var signatures: Signatures
+    @Commented public var requiredOS: Bool?
+    @Commented public var reasonForOS: String?
+    public struct Explusion: Codable, FlexArrayItem {
+        public init() {
+            self.init(expulsion: nil, suspension: nil)
+        }
+        
+        public init(expulsion: String? = nil, suspension: Bool? = nil) {
+            _expulsion = .init(value:expulsion)
+            _suspension = .init(value:suspension)
+        }
+        public var isEmpty: Bool { _expulsion.isEmpty && _suspension.isEmpty }
+        // IGRF has space for 3 expulsion lines
+        static public var maxItemCount: Int? { 3 }
+        @Commented public var expulsion: String?
+        @Commented public var suspension: Bool?
+    }
+    @Commented public var suspensionServedBy: String?
+    
+    public var expulsions : FlexArray<Explusion>
 }
 
 /// Sad that this extension has to be here (and not in importer) but `_foo` is private
@@ -101,10 +155,16 @@ extension IGRF {
         _hostLeague = igrf.hostLeague
         _date = igrf.date
         _time = igrf.time
+        _suspension = igrf.suspension
+        _requiredOS = igrf.requiredOS
+        _reasonForOS = igrf.reasonForOS
+        _suspensionServedBy = igrf.suspensionServedBy
         home = .init(team: sb.home, penalties: sb.homePenalties, points: sb.homePoints)
         away = .init(team: sb.away, penalties: sb.awayPenalties, points: sb.awayPoints)
         // generate all officials, including blank rows
         officials = (1...sb.maxOfficials).map({.init(official: sb.official(index: $0))})
+        expulsions = .init((1...sb.maxOfficials).map({.init(expulsion: sb.expulsion(index: $0))}))
+        signatures = .init(signatures: sb.signatures)
     }
 }
 
@@ -115,6 +175,31 @@ extension IGRF.Official {
         _name = official.name
         _league = official.league
         _cert = official.cert
+    }
+}
+extension IGRF.Explusion {
+    init(expulsion sb: statsbook.IGRF.Expulsion) {
+        let explusion = Importer(tsc: sb)
+        _expulsion = explusion.expulsion
+        _suspension = explusion.suspension
+    }
+}
+
+extension IGRF.Signature {
+    init(signature sb: statsbook.IGRF.Signatures.Signature) {
+        let signature = Importer(tsc: sb)
+        _signature = .init(value: nil) // we don't have images yet
+        _legalName = signature.legalName
+        _skateName = signature.skateName
+    }
+}
+
+extension IGRF.Signatures {
+    init(signatures: statsbook.IGRF.Signatures) {
+        homeTeamCaptain = .init(signature: signatures.homeTeamCaptain)
+        awayTeamCaptain = .init(signature: signatures.awayTeamCaptain)
+        headReferee = .init(signature: signatures.headReferee)
+        headNSO = .init(signature: signatures.headNSO)
     }
 }
 

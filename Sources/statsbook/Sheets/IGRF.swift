@@ -27,6 +27,10 @@ public struct IGRF : TypedSheetCover {
         public var hostLeague = CellDef<String?>("I5")
         public var date = CellDef<String?>("B7")
         public var time = CellDef<String?>("I7")
+        public var suspension = CellDef<Bool?>("L7")
+        public var suspensionServedBy = CellDef<String?>("F40")
+        public var requiredOS = CellDef<Bool?>("D39")
+        public var reasonForOS = CellDef<String?>("I39")
     }
     
     public static var cellDefinitions: CellDefinitions = .init()
@@ -151,12 +155,68 @@ public struct IGRF : TypedSheetCover {
     public let maxOfficials: Int = 28
     /// Get the official by index
     /// - Parameter index: The one base index of the skater
-    /// - Returns: The skater record
+    /// - Returns: The official record
     public func official(index: Int) -> Official {
         // form a skater based on offset adding the index
         .init(sheet: sheet, offset: .init(dr: index - 1))
     }
 
+    public struct Expulsion : TypedSheetCover {
+        public var cellOffset: Address.Offset
+        public var sheet: Sheet
+        init(sheet: Sheet, offset: Address.Offset) {
+            self.sheet = sheet
+            self.cellOffset = offset
+        }
+        public struct CellDefinitions {
+            public var expulsion = CellDef<String?>("A41")
+            public var suspension = CellDef<Bool?>("L41")
+        }
+        public static var cellDefinitions: CellDefinitions = .init()
+    }
+    // The maximum number of officials
+    public let maxExpulsions: Int = 3
+    /// Get the expulsion by index
+    /// - Parameter index: The one base index of the explusion
+    /// - Returns: The expulsion record
+    public func expulsion(index: Int) -> Expulsion {
+        // form a skater based on offset adding the index
+        .init(sheet: sheet, offset: .init(dr: index - 1))
+    }
+
+    public struct Signatures : TypedSheetCover {
+        public struct Signature : TypedSheetCover {
+            public var cellOffset: Address.Offset
+            public var sheet: Sheet
+            init(sheet: Sheet, offset: Address.Offset) {
+                self.sheet = sheet
+                self.cellOffset = offset
+            }
+            public struct CellDefinitions {
+                public var skateName = CellDef<String?>("B49")
+                public var legalName = CellDef<String?>("B50")
+                public var signature = CellDef<String?>("B51")
+            }
+            public static var cellDefinitions: CellDefinitions = .init()
+        }
+        public var cellOffset: Address.Offset
+        public var sheet: Sheet
+        init(sheet: Sheet, offset: Address.Offset) {
+            self.sheet = sheet
+            self.cellOffset = offset
+        }
+        public struct CellDefinitions {
+        }
+        public static var cellDefinitions: CellDefinitions = .init()
+        
+        public var homeTeamCaptain: Signature { .init(sheet: sheet, offset: .zero)}
+        public var awayTeamCaptain: Signature { .init(sheet: sheet, offset: .init(dc:6))}
+        public var headReferee: Signature { .init(sheet: sheet, offset: .init(dr:4))}
+        public var headNSO: Signature { .init(sheet: sheet, offset: .init(dr:4, dc:6))}
+    }
+    public var signatures: Signatures {
+        .init(sheet: sheet, offset: .zero)
+    }
 }
 
 
