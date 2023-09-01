@@ -31,6 +31,10 @@ public struct IGRF : TypedSheetCover {
         public var suspensionServedBy = CellDef<String?>("F40")
         public var requiredOS = CellDef<Bool?>("D39")
         public var reasonForOS = CellDef<String?>("I39")
+        public init() {
+            suspension.valueFormat = .init(booleanFormat: .defaultToNo)
+            requiredOS.valueFormat = .init(booleanFormat: .yesOrNo)
+        }
     }
     
     public static var cellDefinitions: CellDefinitions = .init()
@@ -171,6 +175,9 @@ public struct IGRF : TypedSheetCover {
         public struct CellDefinitions {
             public var expulsion = CellDef<String?>("A41")
             public var suspension = CellDef<Bool?>("L41")
+            public init() {
+                suspension.valueFormat = .init(booleanFormat: .yesBarNo)
+            }
         }
         public static var cellDefinitions: CellDefinitions = .init()
     }

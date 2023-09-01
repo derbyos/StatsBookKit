@@ -7,6 +7,10 @@
 
 import Foundation
 
+public struct ValueFormat {
+    public var booleanFormat: BooleanFormat?
+}
+
 
 /// A simple typed wrapper around an address.  We'd like to make this a property wrapper
 /// but that confuses the keypath subscript
@@ -15,6 +19,8 @@ public struct CellDef<T> {
     public init(_ address: Address) {
         self.address = address
     }
+    /// Allow explicit formats
+    public var valueFormat: ValueFormat?
 }
 
 /// For any wrapper around a sheet (or an areas in a sheet), we provide a way to do a dynamic lookup
@@ -71,10 +77,12 @@ extension TypedSheetCover {
     
     public subscript(dynamicMember path: KeyPath<CellDefinitions, CellDef<Bool?>>) -> Bool? {
         get {
-            return self[Self.cellDefinitions[keyPath: path].address]
+            let def = Self.cellDefinitions[keyPath: path]
+            return self[def.address, def.valueFormat?.booleanFormat]
         }
         nonmutating set {
-            self[Self.cellDefinitions[keyPath: path].address] = newValue
+            let def = Self.cellDefinitions[keyPath: path]
+            self[def.address, def.valueFormat?.booleanFormat] = newValue
         }
     }
     
@@ -116,7 +124,7 @@ extension TypedSheetCover {
         }
     }
     
-    subscript(address: Address) -> Bool? {
+    subscript(address: Address, format: BooleanFormat?) -> Bool? {
         get {
             let cell = sheet[address.offset(by: cellOffset)]
             switch try? cell?.eval()?.asString {
@@ -128,7 +136,16 @@ extension TypedSheetCover {
             }
         }
         nonmutating set {
-            if let newValue {
+            if let format {
+                switch newValue {
+                case .none:
+                    sheet.cachedValues[address.offset(by: cellOffset)] = format.undefinedValue
+                case .some(true):
+                    sheet.cachedValues[address.offset(by: cellOffset)] = format.trueValue
+                case .some(false):
+                    sheet.cachedValues[address.offset(by: cellOffset)] = format.falseValue
+                }
+            } else if let newValue {
                 // we really need meta data to tell us what kind of value this is, but...
                 switch newValue {
                 case true: sheet.cachedValues[address.offset(by: cellOffset)] = .string("X")
