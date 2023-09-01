@@ -71,18 +71,18 @@ extension Score.TeamPeriod {
         score.scorekeeper = scorekeeper
         for i in 0..<score.maxJamRows {
             let row = score[jamRow: i]
-            if i < self.jams.count {
-                try self.jams[i].export(to: row)
+            if i < self.jamRows.count {
+                try self.jamRows[i].export(to: row)
             } else {
                 // save an empty one
-                try Jam().export(to: row)
+                try JamRow().export(to: row)
             }
         }
         // nothing really in the totals, but in case there are comments
         try totals.export(to: score.totals)
     }
 }
-extension Score.TeamPeriod.Jam {
+extension Score.TeamPeriod.JamRow {
     public func export(to jam: StatsBookKit.Score.TeamPeriod.Jam) throws {
         if let sp = self.sp {
             jam.sp = sp

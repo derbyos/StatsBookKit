@@ -297,8 +297,8 @@ Does not have to be entered as "A" or "B"; alphanumeric and multiple characters 
         let file = try loadSampleFile()
         let sbj = StatsBookJSON(statsbook: file)
 
-        XCTAssertEqual(sbj.lineups.homeP1.jam(number: 8)?.jammer.number, "1300")
-        XCTAssertEqual(sbj.lineups.awayP2.jam(number:16, afterSP: true)?.jammer.number, "33")
+        XCTAssertEqual(sbj.lineups.homeP1.jam(number: 8)?.jam.jammer.number, "1300")
+        XCTAssertEqual(sbj.lineups.awayP2.jam(number:16)?.starPass?.jammer.number, "33")
     }
     
     func testRoundTrip() throws {

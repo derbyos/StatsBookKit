@@ -21,10 +21,10 @@ public struct Lineups : Codable {
     public var awayP2: TeamPeriod
     
     public struct TeamPeriod : Codable {
-        public init(lineupTracker: String? = nil, jams: FlexArray<Lineups.TeamPeriod.Jam>) {
+        public init(lineupTracker: String? = nil, jamRows: FlexArray<Lineups.TeamPeriod.JamRow>) {
             _lineupTracker = .init(value:lineupTracker)
 //            _date = .init(value:date)
-            self.jams = jams
+            self.jamRows = jamRows
         }
         
         // found in the igrf
@@ -33,8 +33,22 @@ public struct Lineups : Codable {
         @Commented public var lineupTracker : String?
 //        @Commented public var date : Double?
 
-        public struct Jam : Codable {
-            public init(sp: String? = nil, jam: Int? = nil, noPivot: String? = nil, jammer: Lineups.TeamPeriod.Jam.Skater? = nil, pivot: Lineups.TeamPeriod.Jam.Skater? = nil, blocker1: Lineups.TeamPeriod.Jam.Skater? = nil, blocker2: Lineups.TeamPeriod.Jam.Skater? = nil, blocker3: Lineups.TeamPeriod.Jam.Skater? = nil) {
+        public struct JamRow : Codable, JamRowable {
+            public var jamRowKind: JamRowKind {
+                get {
+                    .init(jam: jam, sp: sp)
+                }
+                set {
+                    // to avoid "Overlapping accesses to 'self', but modification requires exclusive access; consider copying to a local variable"
+                    var jam = self.jam
+                    var sp = self.sp
+                    newValue.extract(jam: &jam, sp: &sp)
+                    self.jam = jam
+                    self.sp = sp
+                }
+            }
+
+            public init(sp: String? = nil, jam: Int? = nil, noPivot: String? = nil, jammer: Lineups.TeamPeriod.JamRow.Skater? = nil, pivot: Lineups.TeamPeriod.JamRow.Skater? = nil, blocker1: Lineups.TeamPeriod.JamRow.Skater? = nil, blocker2: Lineups.TeamPeriod.JamRow.Skater? = nil, blocker3: Lineups.TeamPeriod.JamRow.Skater? = nil) {
                 _sp = .init(value:sp)
                 _jam = .init(value:jam)
                 _noPivot = .init(value:noPivot)
@@ -65,30 +79,32 @@ public struct Lineups : Codable {
             public var blocker3: Skater
         }
         
-        public var jams: FlexArray<Jam>
+        public var jamRows: FlexArray<JamRow>
         
-        public var maxJamRows : Int { Jam.maxItemCount! }
-
-
-        /// Get the line that contains that jam
-        public func jam(number: Int, afterSP: Bool = false) -> Jam? {
-            for ji in jams.enumerated() {
-                if ji.element.jam == number {
-                    if afterSP {
-                        if ji.offset < jams.count-1 {
-                            let next = jams[ji.offset + 1]
-                            if next.sp != nil {
-                                return next
-                            }
-                        }
-                        return nil
-                    } else {
-                        return ji.element
-                    }
-                }
-            }
-            return nil
+        /// Get the index (in jamRows) for the starting row of the jam
+        /// - Parameter number: The jam number
+        /// - Returns: The row found
+        public func index(forJam number: Int) -> Int? {
+            jamRows.index(forJam: number)
         }
+        
+        
+        /// A jam for this team/period, sythnesized from jam rows
+        public typealias Jam = SynthesizedJam<JamRow>
+        
+        /// Get a specific jam by number (including star pass)
+        /// - Parameter number: The jam number
+        /// - Returns: The jam/star pass jam row pair structure
+        public func jam(number: Int) -> Jam? {
+            jamRows.jam(number: number)
+        }
+
+        public subscript(jam number: Int) -> Jam? {
+            get {
+                jamRows[jam: number]
+            }
+        }
+
 
     }
 }
@@ -107,11 +123,11 @@ extension Lineups {
 extension Lineups.TeamPeriod {
     init(teamPeriod sb: StatsBookKit.Lineups.TeamPeriod) {
         _lineupTracker = Importer(tsc: sb).lineupTracker
-        jams = .init(sb.jams.map{.init(jam: $0)})
+        jamRows = .init(sb.jams.map{.init(jam: $0)})
     }
 }
 
-extension Lineups.TeamPeriod.Jam : FlexArrayItem {
+extension Lineups.TeamPeriod.JamRow : FlexArrayItem {
     public static var maxItemCount: Int? {
         38
     }
@@ -138,7 +154,7 @@ extension Lineups.TeamPeriod.Jam : FlexArrayItem {
 }
 
 
-extension Lineups.TeamPeriod.Jam.Skater : FlexArrayItem {
+extension Lineups.TeamPeriod.JamRow.Skater : FlexArrayItem {
     public init() {
         self.init(number: nil, boxTrips: [])
     }

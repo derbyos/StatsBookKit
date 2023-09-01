@@ -16,10 +16,10 @@ public struct Score: Codable {
 
     /// All the data for a given team's period
     public struct TeamPeriod : Codable {
-        public init(scorekeeper: String? = nil, jammerRef: String? = nil, jams: [Score.TeamPeriod.Jam], totals: Score.TeamPeriod.Totals) {
+        public init(scorekeeper: String? = nil, jammerRef: String? = nil, jamRows: FlexArray<Score.TeamPeriod.JamRow> = [], totals: Score.TeamPeriod.Totals) {
             _scorekeeper = .init(value: scorekeeper)
             _jammerRef = .init(value: jammerRef)
-            self.jams = jams
+            self.jamRows = jamRows
             self.totals = totals
         }
         
@@ -34,7 +34,36 @@ public struct Score: Codable {
         /// all the data for a single row in the team period (which can be before
         /// or after a star pass).  Note that this isn't actually jam, rather a part of
         /// a jam, because of course, star passes
-        public struct Jam : Codable {
+        public struct JamRow : Codable, JamRowable {
+            public var jamRowKind: JamRowKind {
+                get {
+                    .init(jam: jam, sp: sp)
+                }
+                set {
+                    // to avoid "Overlapping accesses to 'self', but modification requires exclusive access; consider copying to a local variable"
+                    var jam = self.jam
+                    var sp = self.sp
+                    newValue.extract(jam: &jam, sp: &sp)
+                    self.jam = jam
+                    self.sp = sp
+                }
+            }
+            
+            public init() {
+                self.init(jammer: nil, lost: nil, lead: nil, call: nil, inj: nil, ni: nil, sp: nil, jam: nil, trip2: nil, trip3: nil, trip4: nil, trip5: nil, trip6: nil, trip7: nil, trip8: nil, trip9: nil, trip10: nil, jamTotal: nil, gameTotal: nil)
+            }
+            
+            public var isEmpty: Bool {
+                _jammer.isEmpty && _lost.isEmpty && _lead.isEmpty && _call.isEmpty && _inj.isEmpty &&
+                _ni.isEmpty && _sp.isEmpty && _jam.isEmpty &&
+                _trip2.isEmpty && _trip3.isEmpty && _trip4.isEmpty &&
+                _trip5.isEmpty && _trip6.isEmpty && _trip7.isEmpty &&
+                _trip8.isEmpty && _trip9.isEmpty && _trip10.isEmpty &&
+                _jamTotal.isEmpty && _gameTotal.isEmpty
+            }
+            
+            public static var maxItemCount: Int? { 38 }
+            
             public init(jammer: String? = nil, lost: String? = nil, lead: String? = nil, call: String? = nil, inj: String? = nil, ni: String? = nil, sp: String? = nil, jam: Int? = nil, trip2: Int? = nil, trip3: Int? = nil, trip4: Int? = nil, trip5: Int? = nil, trip6: Int? = nil, trip7: Int? = nil, trip8: Int? = nil, trip9: Int? = nil, trip10: Int? = nil, jamTotal: Int? = nil, gameTotal: Int? = nil) {
                 _jammer = .init(value:jammer)
                 _lost = .init(value:lost)
@@ -84,7 +113,7 @@ public struct Score: Codable {
             }
             
             /// Set the jam totals
-            var withTotals : Jam {
+            var withTotals : JamRow {
                 var retval = self
                 retval.jamTotal = trips.reduce(0, {$0 + $1})
                 return retval
@@ -92,45 +121,33 @@ public struct Score: Codable {
 
         }
         
-        public var jams: [Jam]
+        /// The actual rows in the period (both jams and star passes)
+        public var jamRows: FlexArray<TeamPeriod.JamRow>
         
-        /// Get the line that contains that jam
-        public func jam(number: Int, afterSP: Bool = false) -> Jam? {
-            for ji in jams.enumerated() {
-                if ji.element.jam == number {
-                    if afterSP {
-                        if ji.offset < jams.count-1 {
-                            let next = jams[ji.offset + 1]
-                            if next.sp != nil {
-                                return next
-                            }
-                        }
-                        return nil
-                    } else {
-                        return ji.element
-                    }
-                }
-            }
-            return nil
+        
+        /// Get the index (in jamRows) for the starting row of the jam
+        /// - Parameter number: The jam number
+        /// - Returns: The row found
+        public func index(forJam number: Int) -> Int? {
+            jamRows.index(forJam: number)
         }
         
-        public var maxJamRows : Int { 38 }
-        public struct JamRow : Identifiable {
-            public var id: Int { index }
-            public var index: Int
-            public var row: Jam
+        
+        /// A jam for this team/period, sythnesized from jam rows
+        public typealias Jam = SynthesizedJam<JamRow>
+        
+        /// Get a specific jam by number (including star pass)
+        /// - Parameter number: The jam number
+        /// - Returns: The jam/star pass jam row pair structure
+        public func jam(number: Int) -> Jam? {
+            jamRows.jam(number: number)
         }
-        /// All possible jams rows
-        public var allJamRows : [JamRow] {
+
+        public subscript(jam number: Int) -> Jam? {
             get {
-                // pad out to maximum
-                .init((jams + .init(repeating: .init(), count: maxJamRows)).prefix(maxJamRows).enumerated().map{.init(index: $0.offset, row: $0.element)})
-            }
-            set {
-                jams = .init(newValue.prefix(maxJamRows).map{$0.row.withTotals})
+                jamRows[jam: number]
             }
         }
-        
 
         public struct Totals : Codable {
             public init(jams: Int? = nil, lost: Int? = nil, lead: Int? = nil, call: Int? = nil, inj: Int? = nil, ni: Int? = nil, trip2: Int? = nil, trip3: Int? = nil, trip4: Int? = nil, trip5: Int? = nil, trip6: Int? = nil, trip7: Int? = nil, trip8: Int? = nil, trip9: Int? = nil, trip10: Int? = nil, period: Int? = nil, game: Int? = nil) {
@@ -197,14 +214,14 @@ extension Score.TeamPeriod {
         _scorekeeper = score.scorekeeper
         _jammerRef = score.jammerRef
 //        _date = score.date
-        jams = sb.allJams.map {
+        jamRows = .init(sb.allJams.map {
             .init(jam: $0)
-        }
+        })
         totals = .init(totals: sb.totals)
     }
 }
 
-extension Score.TeamPeriod.Jam {
+extension Score.TeamPeriod.JamRow {
     init(jam sb: StatsBookKit.Score.TeamPeriod.Jam) {
         let jam = Importer(tsc: sb)
         _jammer = jam.jammer

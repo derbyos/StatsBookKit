@@ -20,7 +20,6 @@ The actual API is still not stable and could have some major changes
 - Better handling of times/dates
 - Support for points scored on initial trip (in overtime jams) as a separate value
 - Support for more than 10 trips
-- Officials in IGRF
 - Cleaner design for jam vs jam row (where a jam would include the star pass data)
 
 ## StatsBookKitJSON
@@ -54,4 +53,3 @@ use this for anything important yet.
 - Support for OS
 - Write comments back to statsbook when "exporting"
 - Better structure for handling star passes 
-- Officials in IGRF

@@ -24,18 +24,18 @@ public struct StatsBookJSON : Codable {
         igrf: .init(home: .init(skaters: []),
                     away: .init(skaters:[])
                    ),
-        score: .init(homeP1: .init(jams: [], totals: .init()),
-                     homeP2: .init(jams: [], totals: .init()),
-                     awayP1: .init(jams: [], totals: .init()),
-                     awayP2: .init(jams: [], totals: .init())),
+        score: .init(homeP1: .init(totals: .init()),
+                     homeP2: .init(totals: .init()),
+                     awayP1: .init(totals: .init()),
+                     awayP2: .init(totals: .init())),
         penalties: .init(period1: .init(home: .init(skaters: []),
                                         away: .init(skaters: [])),
                          period2: .init(home: .init(skaters: []),
                                         away: .init(skaters: []))),
-        lineups: .init(homeP1: .init(jams: []),
-                       homeP2: .init(jams: []),
-                       awayP1: .init(jams: []),
-                       awayP2: .init(jams: []))
+        lineups: .init(homeP1: .init(jamRows: []),
+                       homeP2: .init(jamRows: []),
+                       awayP1: .init(jamRows: []),
+                       awayP2: .init(jamRows: []))
     )
 
     public init(metadata: Metadata, igrf: IGRF, score: Score, penalties: Penalties, lineups: Lineups) {
