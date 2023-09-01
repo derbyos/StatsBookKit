@@ -69,6 +69,15 @@ extension TypedSheetCover {
         }
     }
     
+    public subscript(dynamicMember path: KeyPath<CellDefinitions, CellDef<Bool?>>) -> Bool? {
+        get {
+            return self[Self.cellDefinitions[keyPath: path].address]
+        }
+        nonmutating set {
+            self[Self.cellDefinitions[keyPath: path].address] = newValue
+        }
+    }
+    
     public subscript<T>(dynamicMember path: KeyPath<CellDefinitions, CellDef<T>>) -> T {
         get {
             fatalError("Unsupported type in dynamic sheet page: \(String(describing: T.self))")
@@ -107,6 +116,31 @@ extension TypedSheetCover {
         }
     }
     
+    subscript(address: Address) -> Bool? {
+        get {
+            let cell = sheet[address.offset(by: cellOffset)]
+            switch try? cell?.eval()?.asString {
+            case "X","yes","y","YES","Y": return true
+            case "","no","n","NO","N": return false
+            case .none: return false
+            default:
+                return nil
+            }
+        }
+        nonmutating set {
+            if let newValue {
+                // we really need meta data to tell us what kind of value this is, but...
+                switch newValue {
+                case true: sheet.cachedValues[address.offset(by: cellOffset)] = .string("X")
+                case false: sheet.cachedValues[address.offset(by: cellOffset)] = .undefined
+                }
+            } else {
+                sheet.cachedValues[address] = .undefined
+            }
+        }
+    }
+    
+
     var addressFor: AddressFetcher<Self> {
         .init()
     }
