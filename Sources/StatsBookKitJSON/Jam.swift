@@ -23,7 +23,7 @@ public enum JamRowKind {
     
     
     /// We are definitely some sort of star pass
-    var isStarPass : Bool {
+    public var isStarPass : Bool {
         switch self {
         case .starPass, .starPassOther: return true
         default: return false
