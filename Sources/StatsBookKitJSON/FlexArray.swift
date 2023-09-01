@@ -66,7 +66,7 @@ public struct FlexArray<Element: FlexArrayItem> : Sequence, RandomAccessCollecti
             if let maxCount, index >= maxCount {
                 return // drop elements past that mark
             }
-            if elements.isEmpty {
+            if newValue.isEmpty {
                 if index >= elements.count {
                     // don't extend
                 } else if index == elements.count - 1 {
