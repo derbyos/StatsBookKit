@@ -190,10 +190,20 @@ public struct CommentFetcher<T: TypedSheetCover> {
     var sheet: Sheet
     var cellOffset: Address.Offset
     public subscript<T2>(dynamicMember path: KeyPath<T.CellDefinitions, CellDef<T2>>) -> Comment? {
-        guard let xml = sheet.comment(for: T.cellDefinitions[keyPath: path].address + cellOffset) else {
-            return nil
+        get {
+            let addr = T.cellDefinitions[keyPath: path].address + cellOffset
+            if let comment = sheet.cachedComments[addr] {
+                return comment
+            }
+            guard let xml = sheet.comment(for: T.cellDefinitions[keyPath: path].address + cellOffset) else {
+                return nil
+            }
+            return Comment(xml: xml, sheet: sheet)
         }
-        return Comment(xml: xml, sheet: sheet)
+        nonmutating set {
+            let addr = T.cellDefinitions[keyPath: path].address + cellOffset
+            sheet.cachedComments[addr] = newValue
+        }
     }
 }
 

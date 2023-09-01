@@ -78,9 +78,13 @@ public class Sheet {
     /// (and isn't a calculation) won't be here
     var cachedValues: [Address: Value] = [:]
     
+    /// The current cached values for comments, allowing us to change comments
+    var cachedComments: [Address: Comment] = [:]
+    
     /// Reset to sheet to its original values
     func reset() {
         cachedValues = [:]
+        cachedComments = [:]
     }
     
     

@@ -89,6 +89,12 @@ public struct Address : Equatable, Hashable, CustomStringConvertible {
     var previousRow : Address {
         self.adding(row: -1)
     }
+    
+    /// The two direction
+    public enum Axis : Equatable {
+        case row
+        case column
+    }
     /// Offset between cells
     public struct Offset {
         public init(dr: Int = 0, dc: Int = 0) {

@@ -52,4 +52,3 @@ use this for anything important yet.
     - This would need to parse the formula for that cell
 - Support for OS
 - Write comments back to statsbook when "exporting"
-- Better structure for handling star passes 
