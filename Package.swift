@@ -12,7 +12,7 @@ let package = Package(
         // Products define the executables and libraries a package produces, and make them visible to other packages.
         .library(
             name: "StatsBookKit",
-            targets: ["StatsBookKit","StatsBookKitJSON"]),
+            targets: ["StatsBookKit","StatsBookKitJSON","StatsBookKitIssues"]),
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
@@ -34,5 +34,8 @@ let package = Package(
         .target(
             name: "StatsBookKitJSON",
             dependencies: ["StatsBookKit"]),
+        .target(
+            name: "StatsBookKitIssues",
+            dependencies: ["StatsBookKit","StatsBookKitJSON"]),
     ]
 )
